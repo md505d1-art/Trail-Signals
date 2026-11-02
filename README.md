@@ -8,6 +8,10 @@ A mobile app for casual outdoor explorers. It finds a nearby walk, park, viewpoi
 - **Web version:** [`index.html`](index.html) at the repo root. To host it, turn on GitHub Pages for this branch (Settings → Pages → deploy from branch, root folder). The page must be served over HTTPS for location to work.
 - **Source:** [`app/trail-signals.html`](app/trail-signals.html). This is the page body; `index.html` is the same content wrapped in a standalone HTML document.
 
+### Install on a phone
+
+Scan [`qr/trail-signals-qr-card.png`](qr/trail-signals-qr-card.png), open the link in Safari (iPhone) or Chrome (Android), then choose **Add to Home Screen**. The web QR points to a fixed commit served through raw.githack.com; regenerate it after big changes, or switch it to a GitHub Pages address once Pages is turned on.
+
 ### How it finds places
 
 | Where it runs | Your location | Places and stops | Travel times |

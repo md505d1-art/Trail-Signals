@@ -1,0 +1,1218 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Trail Signals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Find outdoor spots near you and get there by bus, train, tram or ferry.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-screen phone app. Scrolling view, optional action bar, tab bar. The radar puts you in the middle: rings are travel minutes, pins sit in their real compass direction. */
+:root{
+  --bg:#FAF5E8; --surface:#FFFDF8; --sunk:#EFE8D6; --line:#E6DDC8; --line-strong:#D3C9B0;
+  --ink:#1B241E; --ink-2:#3A463E; --muted:#56635A; --faint:#8A9389;
+  --forest:#2E5B3B; --forest-deep:#1F4029; --leaf:#5E9A5F; --on-forest:#FFFFFF; --select:#F1F6EC;
+  --sky:#2C6E95; --link:#2A6890;
+  --good-bg:#E2EDDD; --good-fg:#1F4029;
+  --warn-bg:#FCEBCB; --warn-fg:#6B4400; --amber:#C7791A; --amber-bg:#FFF3E2;
+  --info-bg:#DDEBF3; --info-fg:#163F57;
+  --bus:#2C6E95; --train:#1F4029; --tram:#6A4C93; --ferry:#0F6E73; --on-mode:#FFFFFF; --live:#3F8A52;
+  --radar-bg:#EEF2E2; --radar-ring:#C9D6BC; --radar-text:#4C5B50;
+  --summary-bg:#1F4029; --summary-fg:#FFFFFF; --summary-muted:#CFE0CB;
+  --display:"Bricolage Grotesque",Figtree,system-ui,sans-serif;
+  --body:Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101712; --surface:#18211B; --sunk:#222D25; --line:#2B372F; --line-strong:#3B4A40;
+  --ink:#EEF0E6; --ink-2:#CDD5CB; --muted:#A5B0A6; --faint:#7E897F;
+  --forest:#8CC79A; --forest-deep:#B7DEBB; --leaf:#5E9A5F; --on-forest:#0E1911; --select:#1D2B21;
+  --sky:#8EC3E3; --link:#8EC3E3;
+  --good-bg:#1E3324; --good-fg:#B7DEBB;
+  --warn-bg:#3A2D12; --warn-fg:#F2C46B; --amber:#E9A24B; --amber-bg:#33270F;
+  --info-bg:#17303F; --info-fg:#BFE0F2;
+  --bus:#2C6E95; --train:#2E5B3B; --tram:#6A4C93; --ferry:#0F6E73; --on-mode:#FFFFFF; --live:#6CC383;
+  --radar-bg:#162019; --radar-ring:#2D3D31; --radar-text:#9FB0A3;
+  --summary-bg:#1E3324; --summary-fg:#EEF0E6; --summary-muted:#A9C4AC;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101712; --surface:#18211B; --sunk:#222D25; --line:#2B372F; --line-strong:#3B4A40;
+  --ink:#EEF0E6; --ink-2:#CDD5CB; --muted:#A5B0A6; --faint:#7E897F;
+  --forest:#8CC79A; --forest-deep:#B7DEBB; --leaf:#5E9A5F; --on-forest:#0E1911; --select:#1D2B21;
+  --sky:#8EC3E3; --link:#8EC3E3;
+  --good-bg:#1E3324; --good-fg:#B7DEBB;
+  --warn-bg:#3A2D12; --warn-fg:#F2C46B; --amber:#E9A24B; --amber-bg:#33270F;
+  --info-bg:#17303F; --info-fg:#BFE0F2;
+  --bus:#2C6E95; --train:#2E5B3B; --tram:#6A4C93; --ferry:#0F6E73; --on-mode:#FFFFFF; --live:#6CC383;
+  --radar-bg:#162019; --radar-ring:#2D3D31; --radar-text:#9FB0A3;
+  --summary-bg:#1E3324; --summary-fg:#EEF0E6; --summary-muted:#A9C4AC;
+  color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-tap-highlight-color:transparent;overflow:hidden}
+*{box-sizing:border-box}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:var(--link)}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.row{display:flex;align-items:center}
+.stack{display:flex;flex-direction:column}
+.muted{color:var(--muted)}
+.num{font-family:var(--display);font-weight:700;font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;background:var(--bg);position:relative}
+#main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border-top:1.5px solid var(--line);padding-block:6px 8px;flex-shrink:0}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;color:var(--muted);font-size:12px;font-weight:600;text-decoration:none}
+.tab[aria-current="page"]{color:var(--forest);font-weight:700}
+.actionbar{display:flex;gap:10px;background:var(--surface);border-top:1.5px solid var(--line);padding-block:10px;flex-shrink:0}
+
+/* brand header */
+.brand{gap:10px}
+.wordmark{font-family:var(--display);font-weight:800;font-size:24px;line-height:1;color:var(--forest-deep);letter-spacing:-.01em}
+.tagline{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:3px}
+.locpill{margin-left:auto;max-width:46%;min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line-strong);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--ink)}
+.locpill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search{height:46px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line-strong);display:flex;align-items:center;gap:10px;padding:0 6px 0 14px;color:var(--muted)}
+.search input{border:0;outline:none;background:transparent;font-weight:500;flex:1;min-width:0;color:var(--ink)}
+.search button{height:36px;border:0;border-radius:10px;background:var(--forest);color:var(--on-forest);font-weight:700;padding:0 12px;cursor:pointer}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+
+/* chips & buttons */
+.chip{height:44px;min-width:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;text-decoration:none}
+.chip[aria-pressed="true"]{background:var(--forest);border-color:var(--forest);color:var(--on-forest)}
+.chip.soft{background:var(--good-bg);border-color:transparent;color:var(--good-fg)}
+.scroll-x{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-block:2px}
+.scroll-x::-webkit-scrollbar{display:none}
+.iconbtn{width:44px;height:44px;flex-shrink:0;border-radius:14px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none}
+.btn{min-height:52px;border-radius:16px;border:0;background:var(--forest);color:var(--on-forest);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:0 18px;text-decoration:none;text-align:center}
+.btn.ghost{background:var(--surface);color:var(--forest-deep);border:1.5px solid var(--forest)}
+.btn.quiet{background:var(--sunk);color:var(--ink)}
+.btn:disabled{background:var(--sunk);color:var(--muted);cursor:not-allowed}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:18px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.good{background:var(--good-bg);color:var(--good-fg)}
+.warn{background:var(--warn-bg);color:var(--warn-fg)}
+.info{background:var(--info-bg);color:var(--info-fg)}
+.plain{background:var(--sunk);color:var(--ink)}
+.label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.mode{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:7px;font-size:12px;font-weight:700;color:var(--on-mode);white-space:nowrap}
+.mode.bus{background:var(--bus)}.mode.train,.mode.metro{background:var(--train)}.mode.tram{background:var(--tram)}.mode.ferry{background:var(--ferry)}
+.mode.walk{background:var(--sunk);color:var(--ink)}.mode.change{background:var(--info-bg);color:var(--info-fg)}
+.note{display:flex;gap:10px;padding:12px 14px;border-radius:14px;font-size:13px;line-height:1.45}
+.note>svg{flex-shrink:0;margin-top:1px}
+.bars{display:inline-flex;gap:2px;align-items:flex-end}
+.bars i{width:4px;border-radius:1px;background:currentColor}
+.bars i:nth-child(1){height:6px}.bars i:nth-child(2){height:10px}.bars i:nth-child(3){height:14px}
+.bars i.off{opacity:.28}
+.est{font-size:12px;font-weight:700;color:var(--muted)}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--forest-deep)}
+.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--live)}
+
+/* daylight */
+.daylight{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.daybar{flex:1;height:6px;border-radius:999px;background:var(--sunk);overflow:hidden;min-width:60px}
+.daybar i{display:block;height:100%;background:linear-gradient(90deg,#E9B44C,#E07B39);border-radius:999px}
+
+/* radar */
+.radarwrap{position:relative;border-radius:22px;background:var(--radar-bg);border:1.5px solid var(--line-strong);overflow:hidden}
+.radar{position:relative;width:100%;max-width:420px;margin:0 auto;aspect-ratio:1/1}
+.radar>svg{position:absolute;inset:0;width:100%;height:100%}
+.sweep{position:absolute;inset:6%;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 290deg,color-mix(in srgb,var(--forest) 30%,transparent) 360deg);animation:spin 2.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.you{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--sky);border:3px solid var(--surface);box-shadow:0 0 0 6px color-mix(in srgb,var(--sky) 22%,transparent)}
+.pin{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;border:2.5px solid var(--surface);background:var(--forest);color:var(--on-forest);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.pin.k-view,.pin.k-peak{background:#3D6E8F}.pin.k-water,.pin.k-beach,.pin.k-falls{background:#0F6E73}.pin.k-picnic{background:#8A5A1E}
+.pin[aria-pressed="true"]{width:44px;height:44px;z-index:3;outline:3px solid var(--amber);outline-offset:1px}
+.pin .lbl{position:absolute;top:100%;margin-top:6px;left:50%;transform:translateX(-50%);background:var(--forest-deep);color:var(--bg);font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;pointer-events:none;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.pin.sig-good::after,.pin.sig-warn::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2.5px solid var(--live);animation:ping 2.2s ease-out infinite}
+.pin.sig-warn::after{border-color:var(--amber)}
+@keyframes ping{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.6);opacity:0}}
+.radarlegend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;font-weight:600;color:var(--radar-text);padding:0 12px 10px}
+.radarlegend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.surprise{position:absolute;right:10px;top:10px;z-index:4;min-height:40px;border-radius:999px;border:0;background:var(--surface);color:var(--forest-deep);font-weight:700;font-size:13px;padding:0 12px;display:flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+
+/* spot cards */
+.sel{display:flex;flex-direction:column;overflow:hidden}
+.selmain{display:flex;gap:12px;padding:12px;text-decoration:none;color:inherit}
+.thumb{width:92px;height:92px;border-radius:14px;overflow:hidden;flex-shrink:0;background:var(--sunk)}
+.thumb svg{display:block;width:100%;height:100%}
+.selfoot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1.5px solid var(--line);margin:0 12px;padding-block:10px;gap:10px}
+.selfoot div{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);line-height:1.25}
+.selfoot b{display:block;color:var(--ink);font-size:15px}
+.clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rowcard{display:flex;gap:12px;padding:10px;text-decoration:none;color:inherit;align-items:center}
+.rowcard .thumb{width:60px;height:60px;border-radius:12px}
+
+/* details */
+.hero{position:relative;height:260px;background:var(--sunk)}
+.hero svg.art{display:block;width:100%;height:100%}
+.hero .iconbtn{position:absolute;top:12px;border:0;background:var(--surface)}
+.cap{position:absolute;bottom:12px;background:rgba(17,24,19,.78);color:#fff;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px}
+.stats{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:15px;font-weight:600}
+.stats>span{display:inline-flex;align-items:center;gap:6px}
+.banner{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--warn-bg);color:var(--warn-fg);text-decoration:none;font-size:14px}
+.banner.good{background:var(--good-bg);color:var(--good-fg)}
+.transrow{display:flex;gap:12px;align-items:center;padding:12px 14px;text-decoration:none;color:inherit;cursor:pointer;width:100%;text-align:left}
+.transrow+.transrow{border-top:1.5px solid var(--line)}
+.ricon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.vote{height:38px;min-width:44px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line-strong);background:var(--surface);font-weight:600;font-size:13px;cursor:pointer}
+.vote[aria-pressed="true"]{background:var(--good-bg);border-color:var(--forest);color:var(--good-fg)}
+
+/* trip */
+.summary{background:var(--summary-bg);color:var(--summary-fg);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.timeline{list-style:none;margin:0;padding:0}
+.step{display:grid;grid-template-columns:66px 22px minmax(0,1fr);column-gap:6px}
+.step .t{font-weight:700;font-size:13px;white-space:nowrap;text-align:right;padding-top:1px;font-variant-numeric:tabular-nums}
+.rail{display:flex;flex-direction:column;align-items:center}
+.rail .dot{width:16px;height:16px;border-radius:50%;border:3.5px solid var(--muted);background:var(--surface);margin-top:2px;flex-shrink:0}
+.rail .line{flex:1;width:0;border-left:5px solid transparent;margin-top:2px;min-height:12px}
+.step.walk .line{border-left-style:dotted;border-color:var(--faint)}
+.step.bus .line,.step.bus .dot{border-color:var(--bus)}
+.step.train .line,.step.train .dot,.step.metro .line,.step.metro .dot{border-color:var(--train)}
+.step.tram .line,.step.tram .dot{border-color:var(--tram)}
+.step.ferry .line,.step.ferry .dot{border-color:var(--ferry)}
+.step.change .line{border-left-style:dotted;border-color:var(--line-strong)}.step.change .dot{border-color:var(--sky)}
+.step.arrive .dot{border-color:var(--forest);background:var(--forest)}
+.step .body{padding-bottom:20px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.dirs{list-style:none;margin:0;padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px;font-size:14px}
+.dirs li{display:flex;gap:10px}
+.dirs .n{width:24px;height:24px;border-radius:50%;background:var(--good-bg);color:var(--good-fg);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.switch{width:52px;height:32px;border-radius:999px;border:0;background:var(--line-strong);position:relative;cursor:pointer;flex-shrink:0}
+.switch[aria-pressed="true"]{background:var(--forest)}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.switch[aria-pressed="true"]::after{left:24px}
+
+/* update form */
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cat{min-height:56px;padding:8px 12px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface)}
+.cat .ci{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cat[aria-pressed="true"]{border:2px solid var(--amber);padding:7.5px 11.5px;background:var(--amber-bg)}
+.cat.g[aria-pressed="true"]{border-color:var(--forest);background:var(--good-bg)}
+textarea{width:100%;border-radius:14px;border:1.5px solid var(--line-strong);background:var(--surface);padding:12px 14px;font-size:15px;resize:none}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{padding:0;margin-bottom:10px;font-weight:700;font-size:16px}
+.photobox{min-height:88px;border-radius:16px;border:1.5px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;cursor:pointer;color:var(--ink);overflow:hidden;position:relative}
+.photobox img{max-height:160px;width:100%;object-fit:cover}
+
+/* sheet */
+.scrim{position:absolute;inset:0;background:rgba(10,16,12,.45);z-index:30}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:31;background:var(--bg);border-radius:22px 22px 0 0;max-height:88%;overflow-y:auto;padding-block:10px 22px;box-shadow:0 -6px 24px rgba(0,0,0,.2)}
+.grab{width:40px;height:5px;border-radius:999px;background:var(--line-strong);margin:0 auto 10px}
+.toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+.empty{padding:20px;border-radius:18px;border:1.5px dashed var(--line-strong);text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+@media (prefers-reduced-motion: reduce){.sweep,.pin::after{animation:none!important}*{transition:none!important}}
+</style>
+
+<div id="app">
+  <main id="main" tabindex="-1"></main>
+  <div id="action"></div>
+  <nav class="tabs pad" aria-label="Main" id="tabs"></nav>
+  <div id="sheetroot"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ---------------- utilities ---------------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const clamp = (v, lo, hi, d) => { const n = +v; return isFinite(n) ? Math.min(hi, Math.max(lo, Math.round(n))) : d; };
+const hash36 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
+function rng(seed){ let h = 2166136261; for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; }; }
+
+const P = {
+  pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  locate:'<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  bus:'<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/>',
+  train:'<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 21l2-4M16 21l-2-4"/>',
+  tram:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2h6M12 2v4M6 12h12M9 21l1.5-3M15 21l-1.5-3"/>',
+  ferry:'<path d="M3 16l2 4h14l2-4H3zM6 16V10h12v6M12 4v6"/>',
+  walk:'<circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 1 3 3M11 8l-1 7"/>',
+  view:'<path d="M3 20l6-10 4 6 3-4 5 8z"/><circle cx="17" cy="6" r="2"/>',
+  tree:'<path d="M12 22v-5M12 2l6 8h-3l4 6H5l4-6H6z"/>',
+  leaf:'<path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M5 19l7-7"/>',
+  water:'<path d="M2 9c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2M2 15c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2"/>',
+  picnic:'<path d="M3 10h18M6 10l-2 9M18 10l2 9M9 10l-1 5h8l-1-5"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+  tick:'<path d="M5 12l5 5 9-10"/>',
+  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+  sun:'<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6v3M5 11l2 1.5M19 11l-2 1.5"/>',
+  moon:'<path d="M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>', next:'<path d="M9 5l7 7-7 7"/>', close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>',
+  ext:'<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>',
+  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+  dice:'<rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="9" cy="9" r="1.2"/><circle cx="15" cy="15" r="1.2"/><circle cx="15" cy="9" r="1.2"/><circle cx="9" cy="15" r="1.2"/>',
+  swap:'<path d="M7 7h12l-3-3M17 17H5l3 3"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  mud:'<path d="M12 3s-5 6-5 10a5 5 0 0 0 10 0c0-4-5-10-5-10z"/>',
+  gate:'<path d="M4 20V5M20 20V5M4 9h16M4 15h16M9 9v6M14 9v6"/>',
+  block:'<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>',
+  busy:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M18 15c2 .5 3 2 3 5"/>',
+  fac:'<path d="M6 21V3h12v18M3 21h18M14 12h.01"/>',
+  bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+};
+const ic = (n, s = 18, w = 2.2, fill) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${fill || 'none'}" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || P.info}</svg>`;
+const LOGO = s => `<svg width="${s}" height="${Math.round(s*0.85)}" viewBox="0 0 40 34" aria-hidden="true"><path d="M1 33L14 11l13 22z" fill="var(--forest)"/><path d="M13 33l12-19 14 19z" fill="var(--leaf)"/><path d="M25 7a7 7 0 0 1 7 7M25 2a12 12 0 0 1 12 12" stroke="var(--sky)" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="25" cy="14" r="2.6" fill="var(--sky)"/></svg>`;
+
+/* ---------------- geography & sun ---------------- */
+const D2R = Math.PI/180, R2D = 180/Math.PI;
+function distKm(a, b, c, d){ const dl = (c-a)*D2R, dn = (d-b)*D2R; const x = Math.sin(dl/2)**2 + Math.cos(a*D2R)*Math.cos(c*D2R)*Math.sin(dn/2)**2; return 12742*Math.asin(Math.min(1, Math.sqrt(x))); }
+function bearing(a, b, c, d){ const y = Math.sin((d-b)*D2R)*Math.cos(c*D2R); const x = Math.cos(a*D2R)*Math.sin(c*D2R) - Math.sin(a*D2R)*Math.cos(c*D2R)*Math.cos((d-b)*D2R); return (Math.atan2(y, x)*R2D + 360) % 360; }
+const COMPASS = ['north','north-east','east','south-east','south','south-west','west','north-west'];
+const compass = b => COMPASS[Math.round(b/45) % 8];
+function sunInfo(ms, lat, lon){
+  const JD = ms/86400000 + 2440587.5;
+  const n = Math.round(JD - 2451545 + lon/360), Js = n - lon/360;
+  const M = ((357.5291 + 0.98560028*Js) % 360 + 360) % 360, Mr = M*D2R;
+  const C = 1.9148*Math.sin(Mr) + 0.02*Math.sin(2*Mr) + 0.0003*Math.sin(3*Mr);
+  const L = ((M + C + 180 + 102.9372) % 360) * D2R;
+  const Jt = 2451545 + Js + 0.0053*Math.sin(Mr) - 0.0069*Math.sin(2*L);
+  const sd = Math.sin(L)*Math.sin(23.4397*D2R), cd = Math.cos(Math.asin(sd)), phi = lat*D2R;
+  const w = h => { const c = (Math.sin(h*D2R) - Math.sin(phi)*sd)/(Math.cos(phi)*cd); return c < -1 ? 'day' : c > 1 ? 'night' : Math.acos(c)*R2D; };
+  const toMs = J => (J - 2440587.5)*86400000;
+  const w0 = w(-0.833), w6 = w(-6), out = { noon: toMs(Jt) };
+  if (typeof w0 === 'number'){ out.rise = toMs(Jt - w0/360); out.set = toMs(Jt + w0/360); } else out.polar = w0;
+  if (typeof w6 === 'number') out.dusk = toMs(Jt + w6/360);
+  out.azSet = 360 - Math.acos(Math.max(-1, Math.min(1, sd/Math.cos(phi))))*R2D;
+  return out;
+}
+
+/* ---------------- time formatting (place's own clock) ---------------- */
+let TZ = { tz: null, off: null };
+const devTZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){ return null; } })();
+function setTZ(o){
+  TZ = { tz: null, off: null };
+  if (o && o.tz){ try { new Intl.DateTimeFormat(undefined, { timeZone: o.tz }); TZ.tz = o.tz; return; } catch(e){} }
+  if (!o || o.source === 'gps' || o.source === 'demo') return;
+  const dev = -new Date().getTimezoneOffset(), est = Math.round(o.lon/15)*60;
+  if (Math.abs(dev - est) > 90) TZ.off = est;
+}
+function fmt(ms){
+  if (ms == null || !isFinite(ms)) return '--:--';
+  const o = { hour: 'numeric', minute: '2-digit' };
+  try {
+    if (TZ.off != null) return new Intl.DateTimeFormat(undefined, { ...o, timeZone: 'UTC' }).format(ms + TZ.off*60000);
+    return new Intl.DateTimeFormat(undefined, TZ.tz ? { ...o, timeZone: TZ.tz } : o).format(ms);
+  } catch(e){ const d = new Date(ms); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+}
+const dur = m => { m = Math.round(m); return m < 60 ? m + ' min' : Math.floor(m/60) + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') + ' min' : ''); };
+const ago = ms => { const m = Math.max(0, (Date.now() - ms)/60000); if (m < 2) return 'just now'; if (m < 60) return Math.round(m) + ' min ago'; const h = m/60; if (h < 24) return Math.round(h) + ' h ago'; const d = h/24; return d < 2 ? 'yesterday' : Math.round(d) + ' days ago'; };
+
+/* ---------------- place kinds ---------------- */
+const KIND = {
+  park:   { label:'Park', icon:'leaf', acts:['park','picnic'], diff:'easy', visit:'about 1 h', blurb:'A named park with open space to wander, sit and breathe.' },
+  garden: { label:'Garden', icon:'leaf', acts:['park'], diff:'easy', visit:'about 1 h', blurb:'A notable garden. Check opening hours before you go.' },
+  view:   { label:'Viewpoint', icon:'view', acts:['view','walk'], diff:'moderate', visit:'1–1.5 h', blurb:'A mapped viewpoint. Best in clear weather and around golden hour.' },
+  peak:   { label:'Hilltop', icon:'view', acts:['view','walk'], diff:'hilly', visit:'2–3 h', blurb:'A named summit. Expect a climb and big views at the top.' },
+  walk:   { label:'Walk', icon:'tree', acts:['walk'], diff:'moderate', visit:'1.5–2 h', blurb:'A walking route through green space.' },
+  nature: { label:'Nature reserve', icon:'tree', acts:['walk','nature'], diff:'moderate', visit:'1.5–2 h', blurb:'Protected land with paths, wildlife and quiet corners.' },
+  water:  { label:'Waterside', icon:'water', acts:['water','walk'], diff:'easy', visit:'1–2 h', blurb:'A lake, river or reservoir with water to walk beside.' },
+  beach:  { label:'Beach', icon:'water', acts:['water','picnic'], diff:'easy', visit:'2 h+', blurb:'A named beach. Check tides and conditions before you go.' },
+  falls:  { label:'Waterfall', icon:'water', acts:['water','walk'], diff:'moderate', visit:'1–2 h', blurb:'A mapped waterfall. Paths nearby can be wet and slippery.' },
+  picnic: { label:'Picnic spot', icon:'picnic', acts:['picnic','park'], diff:'easy', visit:'about 1 h', blurb:'A mapped picnic site, often with tables or benches.' }
+};
+const MODE = { bus:{label:'Bus',icon:'bus',speed:17,wait:6}, tram:{label:'Tram',icon:'tram',speed:18,wait:5}, metro:{label:'Metro',icon:'train',speed:30,wait:4}, train:{label:'Train',icon:'train',speed:38,wait:8}, ferry:{label:'Ferry',icon:'ferry',speed:20,wait:10} };
+const DIFF = { easy:{label:'Easy',n:1}, moderate:{label:'Moderate',n:2}, hilly:{label:'Hilly',n:3} };
+const bars = n => `<span class="bars" aria-hidden="true"><i></i><i class="${n<2?'off':''}"></i><i class="${n<3?'off':''}"></i></span>`;
+const CATS = [['mud','Muddy','warn'],['block','Closed path','warn'],['gate','Gate closed','warn'],['water','Flooding','warn'],
+              ['view','Great views','good'],['leaf','Wildlife & flowers','good'],['busy','Busy','info'],['fac','Toilets / café closed','info']];
+const catOf = id => CATS.find(c => c[0] === id) || CATS[0];
+
+/* ---------------- state ---------------- */
+const S = {
+  origin: null, spots: [], src: null, foundAt: 0,
+  status: 'idle', msg: '', sel: null, ctl: null,
+  f: LS.get('ts-f', { time: 45, act: 'all', diff: { easy: true, moderate: true, hilly: true } }),
+  sheet: null, whereMsg: '',
+  saved: LS.get('ts-saved', {}), trips: LS.get('ts-trips', []),
+  trip: { leave: 'now', visit: 90, ret: true },
+  form: { cat: null, where: 'On the path', when: 'now', note: '', photo: null },
+  posted: null, more: {}, lines: {}
+};
+const last = LS.get('ts-last', null);
+if (last && last.spots && last.spots.length && Date.now() - last.foundAt < 24*3600e3){
+  Object.assign(S, { origin: last.origin, spots: last.spots, src: last.src, foundAt: last.foundAt, status: 'ready' });
+  S.sel = S.spots[0] && S.spots[0].key; setTZ(S.origin);
+}
+const saveF = () => LS.set('ts-f', S.f);
+function getSpot(key){
+  return S.spots.find(s => s.key === key) || (S.saved[key] && S.saved[key].spot) || ((S.trips.find(t => t.key === key) || {}).spot) || null;
+}
+
+/* ---------------- community updates (shared when the page can store them) ---------------- */
+const Store = { db: null, ready: false, list: [], votes: [], local: LS.get('ts-updates', []), myVotes: LS.get('ts-myvotes', {}), mine: LS.get('ts-mine', {}), photos: LS.get('ts-photos', {}) };
+let VID = LS.get('ts-vid', null); if (!VID){ VID = Math.random().toString(36).slice(2, 12); LS.set('ts-vid', VID); }
+async function initDb(){
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  let db = null; try { db = await window.claude.use('db'); } catch(e){}
+  if (!db) return;
+  Store.db = db;
+  try { const u = await window.claude.use('user'); if (u && typeof u.id === 'function'){ const id = await u.id(); if (id) VID = String(id).replace(/[^A-Za-z0-9]/g, '').slice(0, 40) || VID; } } catch(e){}
+  try {
+    db.collection('updates').orderBy('createdAt', 'desc').limit(500).onSnapshot(s => { Store.list = s.docs.map(d => ({ id: d.id, ...d.data() })); Store.ready = true; soft(); }, () => { Store.db = null; soft(); });
+    db.collection('votes').limit(1000).onSnapshot(s => { Store.votes = s.docs.map(d => ({ id: d.id, ...d.data() })); soft(); }, () => {});
+  } catch(e){ Store.db = null; }
+}
+function allUpdates(){
+  const now = Date.now();
+  const src = Store.db ? Store.list : Store.local;
+  return src.filter(u => u && u.spot && now - (+u.seenAt || 0) < 14*86400e3).sort((a, b) => b.seenAt - a.seenAt);
+}
+const updatesFor = key => allUpdates().filter(u => u.spot === key);
+function voteCount(id){
+  if (Store.db){ let y = 0, n = 0; Store.votes.forEach(v => { if (v.u === id){ v.v === 'yes' ? y++ : n++; } }); return { y, n }; }
+  const v = Store.myVotes[id]; return { y: v === 'yes' ? 1 : 0, n: v === 'no' ? 1 : 0 };
+}
+function signalOf(key){
+  const u = updatesFor(key)[0]; if (!u || Date.now() - u.seenAt > 3*86400e3) return null;
+  return catOf(u.cat)[2] === 'warn' ? 'warn' : 'good';
+}
+
+/* ---------------- finding places ---------------- */
+async function fetchJSON(url, opt = {}, ms = 15000){
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  const outer = opt.signal; if (outer) outer.addEventListener('abort', () => ctl.abort());
+  try { const r = await fetch(url, { ...opt, signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+async function overpass(q, signal){
+  let err;
+  for (const u of OVERPASS){
+    try { return await fetchJSON(u, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal }, 30000); }
+    catch(e){ if (signal && signal.aborted) throw e; err = e; }
+  }
+  throw err;
+}
+function classify(t){
+  if (t.tourism === 'viewpoint') return 'view';
+  if (t.natural === 'peak') return 'peak';
+  if (t.waterway === 'waterfall') return 'falls';
+  if (t.natural === 'beach') return 'beach';
+  if (t.natural === 'water') return 'water';
+  if (t.leisure === 'nature_reserve' || t.boundary === 'national_park' || t.natural === 'wood') return 'nature';
+  if (t.leisure === 'garden') return 'garden';
+  if (t.tourism === 'picnic_site') return 'picnic';
+  return 'park';
+}
+function stopMode(t){
+  if (t.amenity === 'ferry_terminal') return 'ferry';
+  if (t.railway === 'tram_stop' || t.station === 'light_rail') return 'tram';
+  if (t.station === 'subway' || t.subway === 'yes') return 'metro';
+  if (t.railway === 'station' || t.railway === 'halt') return 'train';
+  return 'bus';
+}
+const walkMin = km => Math.max(1, Math.round(km*1.25/4.8*60));
+
+async function osmFind(o, signal){
+  const R = 14000, A = `(around:${R},${o.lat},${o.lon})`;
+  const q = `[out:json][timeout:25];(
+nwr["tourism"="viewpoint"]["name"]${A};
+nwr["leisure"="park"]["name"]["wikidata"]${A};
+nwr["leisure"="nature_reserve"]["name"]${A};
+nwr["boundary"="national_park"]["name"]${A};
+nwr["leisure"="garden"]["name"]["wikidata"]${A};
+nwr["natural"~"^(peak|beach|wood|water)$"]["name"]["wikidata"]${A};
+nwr["waterway"="waterfall"]["name"]${A};
+nwr["tourism"="picnic_site"]["name"]${A};
+);out center tags 300;`;
+  const data = await overpass(q, signal);
+  const base = { view:4, falls:5, peak:4, nature:4, beach:4, park:3, water:3, garden:2, picnic:1 };
+  const seen = new Set(), cands = [];
+  for (const el of (data.elements || [])){
+    const t = el.tags || {}, lat = el.lat != null ? el.lat : el.center && el.center.lat, lon = el.lon != null ? el.lon : el.center && el.center.lon;
+    if (lat == null || !t.name) continue;
+    const name = t['name:en'] && !/^[\x00-\x7F]*$/.test(t.name) ? t.name + ' · ' + t['name:en'] : t.name;
+    const id = name.toLowerCase(); if (seen.has(id)) continue; seen.add(id);
+    const kind = classify(t), km = distKm(o.lat, o.lon, lat, lon);
+    if (km < 0.25) continue;
+    cands.push({ el, t, kind, lat, lon, km, name, score: base[kind] + (t.wikipedia ? 2 : 0) + (t.wikidata ? 1 : 0) - km*0.12 });
+  }
+  cands.sort((a, b) => b.score - a.score);
+  const per = {}, pick = [];
+  for (const c of cands){ if ((per[c.kind] = (per[c.kind] || 0) + 1) > 4) continue; pick.push(c); if (pick.length >= 14) break; }
+  if (!pick.length) return [];
+  const around = (a, b) => `node(around:650,${a},${b})["highway"="bus_stop"];node(around:1600,${a},${b})["railway"~"^(station|halt|tram_stop)$"];node(around:900,${a},${b})["amenity"="ferry_terminal"];`;
+  const sq = `[out:json][timeout:25];(${pick.map(c => around(c.lat, c.lon)).join('')}${around(o.lat, o.lon)});out body 3000;`;
+  let stops = [];
+  try { const sd = await overpass(sq, signal); stops = (sd.elements || []).filter(e => e.lat != null).map(e => ({ id: e.id, lat: e.lat, lon: e.lon, mode: stopMode(e.tags || {}), name: (e.tags && (e.tags.name || (e.tags.ref ? 'Stop ' + e.tags.ref : ''))) || 'Unnamed stop' })); }
+  catch(e){ if (signal && signal.aborted) throw e; }
+  const near = (lat, lon, maxKm, mode) => stops.map(s => ({ s, km: distKm(lat, lon, s.lat, s.lon) })).filter(x => x.km <= maxKm && (!mode || x.s.mode === mode)).sort((a, b) => (a.km + (a.s.mode === 'bus' ? 0.25 : 0)) - (b.km + (b.s.mode === 'bus' ? 0.25 : 0)));
+  return pick.map(c => {
+    const t = c.t, k = KIND[c.kind];
+    const s = { key: 'osm-' + c.el.type[0] + c.el.id, name: c.name, kind: c.kind, lat: c.lat, lon: c.lon, src: 'osm',
+      km: c.km, brg: bearing(o.lat, o.lon, c.lat, c.lon), diff: k.diff, diffNote: 'Estimated from map data', visit: k.visit,
+      blurb: t.description ? String(t.description).slice(0, 160) : k.blurb, path: '', tips: [], dirs: [], facts: [] };
+    if (c.kind === 'peak' && t.ele) s.facts.push('Summit ' + Math.round(+t.ele) + ' m');
+    if (t.wheelchair) s.facts.push('Wheelchair access: ' + t.wheelchair);
+    if (t.opening_hours) s.facts.push('Opening hours: ' + t.opening_hours);
+    if (t.fee) s.facts.push('Fee: ' + t.fee);
+    if (t.wheelchair === 'yes') { s.diff = 'easy'; s.diffNote = 'Mapped as wheelchair accessible'; }
+    if (c.km < 1.3){ s.walkOnly = true; s.total = walkMin(c.km); s.finalMin = s.total; s.finalKm = +(c.km*1.25).toFixed(1); return s; }
+    const st = near(c.lat, c.lon, 1.6)[0];
+    if (!st){ s.noTransit = true; s.total = null; return s; }
+    const fk = st.km*1.25;
+    const oSame = near(o.lat, o.lon, 2, st.s.mode)[0], oAny = near(o.lat, o.lon, 2)[0];
+    const os = oSame && walkMin(oSame.km) <= 20 ? oSame : oAny;
+    s.stop = { id: st.s.id, name: st.s.name, mode: st.s.mode, lat: st.s.lat, lon: st.s.lon, lines: [] };
+    s.oStop = os ? { name: os.s.name, mode: os.s.mode } : null;
+    s.walkTo = os ? walkMin(os.km) : 8;
+    const m = MODE[st.s.mode];
+    const rideKm = distKm(os ? os.s.lat : o.lat, os ? os.s.lon : o.lon, st.s.lat, st.s.lon)*1.35;
+    s.changes = os && os.s.mode !== st.s.mode ? 1 : 0;
+    s.ride = Math.max(3, Math.round(rideKm/m.speed*60) + 2) + (os ? MODE[os.s.mode].wait : m.wait) + (s.changes ? 8 : 0);
+    s.finalMin = walkMin(st.km); s.finalKm = +fk.toFixed(1);
+    s.total = s.walkTo + s.ride + s.finalMin;
+    s.dirs = [`From ${st.s.name}, head ${compass(bearing(st.s.lat, st.s.lon, c.lat, c.lon))} towards ${c.name}.`,
+              `It's about ${Math.round(fk*1000/50)*50} m on foot, roughly ${s.finalMin} min.`,
+              `Look for the entrance and signs. The map point marks the middle of the place.`];
+    return s;
+  });
+}
+
+function aiPrompt(text, o){
+  return `You help casual outdoor explorers find places they can reach by public transport.
+Starting point: "${text}"${o ? ` (coordinates ${o.lat.toFixed(4)}, ${o.lon.toFixed(4)})` : ''}.
+List 8 real, distinctive outdoor spots (parks, viewpoints, walks, picnic spots, waterside, nature reserves) that most people could reach from the starting point by public transport in under 75 minutes. Mix types and distances. Only include places you are confident exist; leave a place out rather than guess. Use the public transport a local would actually use. Name real lines or services only when you are confident; otherwise leave "lines" empty.
+Reply with JSON only, exactly this shape:
+{"origin":{"name":string,"lat":number,"lon":number,"timezone":IANA timezone string,"country":string},
+"spots":[{"name":string,"kind":"park"|"viewpoint"|"walk"|"picnic"|"water"|"nature","lat":number,"lon":number,
+"blurb":string (max 140 chars),"difficulty":"easy"|"moderate"|"hilly","difficultyNote":string (max 70 chars),
+"visit":string like "1–2 h","path":string like "3 km loop" or "",
+"stop":{"name":string,"mode":"bus"|"train"|"tram"|"metro"|"ferry","lines":[string]},
+"walkToStopMin":number,"rideMin":number (including waiting and any changes),"changes":number,"finalWalkMin":number,"finalWalkKm":number,
+"directions":[up to 3 short steps from the stop to the spot],"tips":[up to 3 short practical tips]}]}`;
+}
+function fromAI(d, o0, text){
+  const oo = (d && d.origin) || {};
+  const o = o0 ? { ...o0 } : { lat: +oo.lat, lon: +oo.lon, name: String(oo.name || text).slice(0, 60), source: 'ai' };
+  if (oo.timezone) o.tz = String(oo.timezone);
+  if (!isFinite(o.lat) || !isFinite(o.lon)){ o.lat = 0; o.lon = 0; o.noCoords = true; }
+  const kmap = { park:'park', viewpoint:'view', walk:'walk', picnic:'picnic', water:'water', nature:'nature' };
+  const spots = (Array.isArray(d && d.spots) ? d.spots : []).slice(0, 10).map(x => {
+    if (!x || !x.name) return null;
+    const kind = kmap[x.kind] || 'park', k = KIND[kind];
+    const lat = +x.lat, lon = +x.lon, has = isFinite(lat) && isFinite(lon) && !o.noCoords;
+    const st = x.stop || {}, mode = MODE[st.mode] ? st.mode : 'bus';
+    const s = { key: 'ai-' + hash36(String(x.name).toLowerCase() + (has ? lat.toFixed(2) + lon.toFixed(2) : '')), src: 'ai',
+      name: String(x.name).slice(0, 80), kind, lat: has ? lat : null, lon: has ? lon : null,
+      km: has ? distKm(o.lat, o.lon, lat, lon) : null, brg: has ? bearing(o.lat, o.lon, lat, lon) : null,
+      diff: DIFF[x.difficulty] ? x.difficulty : k.diff, diffNote: String(x.difficultyNote || '').slice(0, 90),
+      visit: String(x.visit || k.visit).slice(0, 20), path: String(x.path || '').slice(0, 30), blurb: String(x.blurb || k.blurb).slice(0, 180),
+      tips: (Array.isArray(x.tips) ? x.tips : []).slice(0, 3).map(t => String(t).slice(0, 140)),
+      dirs: (Array.isArray(x.directions) ? x.directions : []).slice(0, 3).map(t => String(t).slice(0, 160)), facts: [],
+      stop: { name: String(st.name || 'Nearest stop').slice(0, 60), mode, lines: (Array.isArray(st.lines) ? st.lines : []).slice(0, 4).map(l => String(l).slice(0, 16)) },
+      oStop: null, walkTo: clamp(x.walkToStopMin, 0, 30, 6), ride: clamp(x.rideMin, 1, 180, 25), changes: clamp(x.changes, 0, 4, 0),
+      finalMin: clamp(x.finalWalkMin, 0, 60, 10), finalKm: isFinite(+x.finalWalkKm) ? Math.max(0, +(+x.finalWalkKm).toFixed(1)) : null };
+    if (s.finalKm == null) s.finalKm = +(s.finalMin*4.8/60).toFixed(1);
+    s.total = s.walkTo + s.ride + s.finalMin;
+    return s;
+  }).filter(Boolean);
+  return { origin: o, spots };
+}
+function demoData(){
+  const o = { name: 'Demo city', lat: 51.5, lon: -0.1, source: 'demo' };
+  const mk = (name, kind, dLat, dLon, diff, stop, mode, lines, walkTo, ride, fin, blurb, extra) => {
+    const lat = o.lat + dLat, lon = o.lon + dLon;
+    return Object.assign({ key: 'demo-' + hash36(name), src: 'demo', name, kind, lat, lon, km: distKm(o.lat, o.lon, lat, lon), brg: bearing(o.lat, o.lon, lat, lon),
+      diff, diffNote: '', visit: KIND[kind].visit, path: '', blurb, tips: [], facts: [], stop: { name: stop, mode, lines }, oStop: { name: 'Market St', mode },
+      walkTo, ride, changes: 0, finalMin: fin, finalKm: +(fin*4.8/60).toFixed(1), total: walkTo + ride + fin,
+      dirs: ['Leave the stop and follow the signs for the park entrance.', 'Keep to the main path.'] }, extra || {});
+  };
+  return { origin: o, spots: [
+    mk("Weavers' Park", 'park', 0.012, 0.01, 'easy', 'Weavers Gate', 'bus', ['3'], 3, 10, 3, 'A flat Victorian park with a bandstand, lawns and a duck pond.', { path: '1.2 km loop' }),
+    mk('Millbrook Meadows', 'picnic', 0.05, -0.08, 'easy', 'Millbrook', 'train', [], 8, 18, 6, 'Wildflower meadows around a still pond, with picnic tables and a level boardwalk.'),
+    mk('Hollin Wood loop', 'nature', -0.06, -0.05, 'moderate', 'Hollin Bridge', 'bus', ['7'], 4, 25, 9, 'An old oak wood along a stream, with a footbridge over the beck.', { path: '3.4 km loop' }),
+    mk('Larkhill Viewpoint', 'view', 0.07, 0.12, 'moderate', 'Larkhill Road', 'bus', ['24'], 4, 29, 12, 'A grassy hilltop with benches and a long view west over the valley.', { path: '2.4 km loop', diffNote: 'Steady 90 m climb; uneven steps near the top' }),
+    mk('Ridgeback Common', 'peak', -0.1, 0.16, 'hilly', 'Common Lane', 'train', [], 7, 37, 14, 'Open heath along a ridge, with a trig point and views in every direction.'),
+    mk('Canal Basin', 'water', -0.02, 0.03, 'easy', 'Wharf Street', 'tram', ['T1'], 5, 9, 4, 'Towpaths, narrowboats and a café by the old canal locks.')
+  ]};
+}
+
+/* ---------------- actions: where am I, search ---------------- */
+function setStatus(st, msg){ S.status = st; S.msg = msg || ''; if (route().v !== 'explore') location.hash = 'explore'; else render(true); }
+function done(o, spots, src){
+  S.ctl = null;
+  spots.sort((a, b) => (a.total == null) - (b.total == null) || (a.total || 0) - (b.total || 0));
+  Object.assign(S, { origin: o, spots, src, foundAt: Date.now(), status: 'ready', msg: '' });
+  setTZ(o);
+  const inRange = spots.filter(s => s.total != null && s.total <= S.f.time);
+  S.sel = (inRange[0] || spots[0]).key;
+  LS.set('ts-last', { origin: o, spots, src, foundAt: S.foundAt });
+  if (route().v !== 'explore') location.hash = 'explore'; else render(false);
+}
+async function getSample(){ if (!window.claude || typeof window.claude.use !== 'function') return null; try { return await window.claude.use('sample'); } catch(e){ return null; } }
+function aiErr(e){
+  const c = e && e.code;
+  if (c === 'not_granted') return "Claude wasn't allowed to help in this view. Allow it when asked, or try the demo city.";
+  if (c === 'rate_limited') return 'Lots of searches right now. Try again in a minute.';
+  if (c === 'invalid_json' || c === 'empty') return "Couldn't read a list of places for that search. Try a nearby town or add the country.";
+  return "Couldn't reach Claude just now. Check your connection and try again.";
+}
+async function aiFind(text, o){
+  const sample = await getSample();
+  if (!sample){ setStatus('error', "Search by place name needs Claude, which isn't available in this view. Open the web version to use your location, or try the demo city."); return; }
+  S.ctl = new AbortController();
+  setStatus('loading', `Asking Claude about outdoor spots near ${text}. This can take up to a minute.`);
+  try {
+    const data = await sample.json(aiPrompt(text, o), { signal: S.ctl.signal, modelTier: 'default' });
+    const r = fromAI(data, o, text);
+    if (!r.spots.length) throw { code: 'empty' };
+    done(r.origin, r.spots, 'ai');
+  } catch(e){
+    S.ctl = null;
+    if (e && e.code === 'cancelled'){ setStatus(S.spots.length ? 'ready' : 'idle'); return; }
+    setStatus('error', aiErr(e));
+  }
+}
+async function findAround(o, text){
+  setTZ(o);
+  const ctl = S.ctl = new AbortController();
+  setStatus('loading', `Scanning for outdoor spots around ${o.name}…`);
+  try { const res = await osmFind(o, ctl.signal); if (ctl.signal.aborted) return; if (res.length) return done(o, res, 'osm'); }
+  catch(e){ if (ctl.signal.aborted) return; }
+  S.ctl = null;
+  return aiFind(text || o.name, o);
+}
+async function searchPlace(text){
+  text = (text || '').trim(); if (!text) return;
+  S.sheet = null;
+  setStatus('loading', `Looking up ${text}…`);
+  let g;
+  try { g = await fetchJSON(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&accept-language=en&q=${encodeURIComponent(text)}`, {}, 10000); }
+  catch(e){ return aiFind(text, null); }
+  if (!g || !g[0]){ setStatus('error', `Couldn't find “${text}”. Try a bigger nearby town, or add the country.`); return; }
+  const a = g[0].address || {};
+  findAround({ lat: +g[0].lat, lon: +g[0].lon, name: g[0].name || text, area: a.city || a.town || a.state || '', cc: (a.country_code || '').toUpperCase(), source: 'search' }, text);
+}
+function useLocation(){
+  S.sheet = null;
+  if (!navigator.geolocation) return locFail();
+  setStatus('locating', 'Finding where you are…');
+  let settled = false;
+  const guard = setTimeout(() => { if (!settled){ settled = true; locFail(); } }, 15000);
+  try {
+    navigator.geolocation.getCurrentPosition(async p => {
+      if (settled) return; settled = true; clearTimeout(guard);
+      const o = { lat: p.coords.latitude, lon: p.coords.longitude, name: 'Your location', source: 'gps' };
+      try {
+        const g = await fetchJSON(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=15&accept-language=en&lat=${o.lat}&lon=${o.lon}`, {}, 8000);
+        const a = g.address || {};
+        o.name = a.suburb || a.neighbourhood || a.quarter || a.village || a.town || a.city_district || a.city || g.name || o.name;
+        o.area = a.city || a.town || a.county || ''; o.cc = (a.country_code || '').toUpperCase();
+      } catch(e){}
+      findAround(o, null);
+    }, () => { if (settled) return; settled = true; clearTimeout(guard); locFail(); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
+  } catch(e){ settled = true; clearTimeout(guard); locFail(); }
+}
+function locFail(){
+  S.status = S.spots.length ? 'ready' : 'idle';
+  S.sheet = 'where';
+  S.whereMsg = "Your location isn't available here. Type your town, neighbourhood or station instead.";
+  render(true);
+}
+
+/* ---------------- illustration ---------------- */
+function phase(){
+  if (!S.origin || S.origin.noCoords) return 'day';
+  const now = Date.now(), su = sunInfo(now, S.origin.lat, S.origin.lon);
+  if (su.polar === 'night') return 'night'; if (su.polar === 'day') return 'day';
+  if (now > (su.dusk || su.set) + 15*60e3 || now < su.rise - 30*60e3) return 'night';
+  if (now > su.set - 75*60e3 || now < su.rise + 40*60e3) return 'golden';
+  return 'day';
+}
+const PAL = {
+  day:    { sky:['#CDE3EF','#EEF3E4'], sun:'#F6D58E', hills:['#AFCBB8','#6E9A78','#2E5B3B'], water:'#8DBBD6', sand:'#EBD9A8', trunk:'#5B4632' },
+  golden: { sky:['#F5C98E','#F8E6C6'], sun:'#F08A4B', hills:['#C8B58C','#8A8F5E','#3E5A36'], water:'#E5B48A', sand:'#E7C995', trunk:'#4F3A2A' },
+  night:  { sky:['#1C2944','#33466A'], sun:'#E9EEF5', hills:['#3A4F60','#2A3B48','#18262E'], water:'#2E4A63', sand:'#59606A', trunk:'#1B2328' }
+};
+function art(s, cls){
+  const r = rng(s.key), ph = phase(), p = PAL[ph], id = 'g' + hash36(s.key + ph);
+  const hill = (y, a, col) => { const x1 = 15 + r()*25, x2 = 55 + r()*30; return `<path d="M0 ${y} C${x1} ${y - a} ${x1 + 10} ${y - a*0.3} 50 ${y - a*0.5} S${x2} ${y + a*0.2} 100 ${y - a*0.6} V70 H0Z" fill="${col}"/>`; };
+  let g = `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient></defs><rect width="100" height="70" fill="url(#${id})"/>`;
+  const sx = ph === 'golden' ? 70 + r()*15 : 20 + r()*60, sy = ph === 'golden' ? 34 : 12 + r()*8;
+  g += `<circle cx="${sx}" cy="${sy}" r="${ph === 'night' ? 4.5 : 7}" fill="${p.sun}"/>`;
+  if (ph === 'night') for (let i = 0; i < 9; i++) g += `<circle cx="${r()*100}" cy="${r()*30}" r="${0.3 + r()*0.4}" fill="#fff" opacity=".8"/>`;
+  const k = s.kind;
+  g += hill(40 + r()*6, 10, p.hills[0]);
+  if (k === 'view' || k === 'peak'){ const px = 30 + r()*40, py = k === 'peak' ? 14 : 22; g += `<path d="M${px - 34} 70 L${px - 6} ${py + 4} L${px} ${py} L${px + 7} ${py + 5} L${px + 36} 70Z" fill="${p.hills[1]}"/>`; }
+  else g += hill(50 + r()*4, 8, p.hills[1]);
+  if (k === 'water' || k === 'beach' || k === 'falls'){
+    if (k === 'falls') g += `<path d="M38 26h24v44H38z" fill="${p.hills[2]}"/><path d="M46 26h8v38h-8z" fill="#EAF4F8" opacity=".9"/>`;
+    g += `<path d="M0 54 C30 51 70 57 100 53 V70 H0Z" fill="${p.water}"/>`;
+    for (let i = 0; i < 5; i++){ const x = r()*90, y = 57 + r()*10; g += `<path d="M${x} ${y} h${4 + r()*6}" stroke="#fff" stroke-width=".8" opacity=".6" stroke-linecap="round"/>`; }
+    if (k === 'beach') g += `<path d="M0 62 C40 58 60 66 100 61 V70 H0Z" fill="${p.sand}"/>`;
+  } else {
+    g += hill(60 + r()*3, 6, p.hills[2]);
+    const trees = k === 'nature' || k === 'walk' ? 9 : k === 'view' || k === 'peak' ? 2 : 4;
+    for (let i = 0; i < trees; i++){
+      const x = 4 + r()*92, y = 58 + r()*8, h = 7 + r()*6;
+      g += (k === 'nature' || k === 'walk') ? `<path d="M${x} ${y - h} L${x + h*0.45} ${y} L${x - h*0.45} ${y}Z" fill="${p.hills[2]}" stroke="${p.hills[1]}" stroke-width=".4"/>`
+        : `<path d="M${x} ${y} v-${h*0.5}" stroke="${p.trunk}" stroke-width="1"/><circle cx="${x}" cy="${y - h*0.6}" r="${h*0.35}" fill="${p.hills[1]}"/>`;
+    }
+    if (k === 'picnic' || k === 'view') { const x = 60 + r()*20; g += `<path d="M${x} 62h10M${x + 1} 62v4M${x + 9} 62v4M${x - 1} 59.5h12" stroke="${p.trunk}" stroke-width="1.2" stroke-linecap="round"/>`; }
+  }
+  return `<svg class="${cls || ''}" viewBox="0 0 100 70" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration of ${esc(KIND[s.kind].label.toLowerCase())} at ${ph === 'night' ? 'night' : ph === 'golden' ? 'golden hour' : 'daytime'}">${g}</svg>`;
+}
+
+/* ---------------- shared bits ---------------- */
+function daylight(){
+  if (!S.origin || S.origin.noCoords) return '';
+  const now = Date.now(), su = sunInfo(now, S.origin.lat, S.origin.lon);
+  if (su.polar === 'day') return `<div class="daylight">${ic('sun',18)}<span><b>Daylight all day</b> here at this time of year</span></div>`;
+  if (su.polar === 'night') return `<div class="daylight">${ic('moon',18)}<span><b>Polar night.</b> Pick lit parks and short walks</span></div>`;
+  if (now < su.rise){ return `<div class="daylight">${ic('moon',18)}<span>Sunrise at <b>${fmt(su.rise)}</b>. Plan a morning adventure</span></div>`; }
+  if (now > su.set){ const nx = sunInfo(now + 86400e3, S.origin.lat, S.origin.lon); return `<div class="daylight">${ic('moon',18)}<span>The sun has set${su.dusk && now < su.dusk ? ', dark by <b>' + fmt(su.dusk) + '</b>' : ''}. Sunrise <b>${fmt(nx.rise)}</b></span></div>`; }
+  const left = (su.set - now)/60000, pct = Math.max(2, Math.min(100, (now - su.rise)/(su.set - su.rise)*100));
+  return `<div class="daylight"><span style="color:var(--amber);display:flex">${ic('sun',18)}</span><span style="white-space:nowrap"><b>${dur(left)}</b> of daylight · sunset <b>${fmt(su.set)}</b></span><span class="daybar" aria-hidden="true"><i style="width:${100 - pct}%;margin-left:${pct}%"></i></span></div>`;
+}
+const modeBadge = (mode, txt) => `<span class="mode ${mode}">${ic(MODE[mode] ? MODE[mode].icon : 'walk', 14)}${esc(txt)}</span>`;
+const lineTxt = s => s.stop ? (MODE[s.stop.mode].label + (s.stop.lines && s.stop.lines.length ? ' ' + s.stop.lines.slice(0, 2).join(', ') : '')) : 'Walk';
+const tot = s => s.total == null ? null : s.total;
+function srcNote(){
+  if (S.src === 'osm') return `Places and stops from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors. Travel times are estimates, so check live times before you go.`;
+  if (S.src === 'ai') return `Suggested by Claude from general knowledge, not live data. Double-check places, lines and times before you set off.`;
+  if (S.src === 'demo') return `Demo city. All places, stops and times here are made up.`;
+  return '';
+}
+function spotSrcPill(s){
+  if (s.src === 'osm') return `<span class="pill info">${ic('map',13)}OpenStreetMap · times estimated</span>`;
+  if (s.src === 'ai') return `<span class="pill info">${ic('spark',13)}Suggested by Claude · check details</span>`;
+  return `<span class="pill plain">Demo place</span>`;
+}
+function transitLinks(s){
+  if (s.src === 'demo' || s.lat == null) return '';
+  const o = S.origin;
+  const g = `https://www.google.com/maps/dir/?api=1${o && !o.noCoords ? `&origin=${o.lat},${o.lon}` : ''}&destination=${s.lat},${s.lon}&travelmode=transit`;
+  const m = `https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=16/${s.lat}/${s.lon}`;
+  return { g, m };
+}
+function filtered(){
+  const f = S.f;
+  return S.spots.filter(s => (f.time >= 999 || (s.total != null && s.total <= f.time)) && (f.act === 'all' || KIND[s.kind].acts.includes(f.act)) && f.diff[s.diff]);
+}
+const ACTS = [['all','Anything'],['walk','Walks'],['park','Parks'],['view','Viewpoints'],['picnic','Picnic spots'],['water','Waterside']];
+
+/* ---------------- views ---------------- */
+function header(){
+  const o = S.origin;
+  return `<header class="pad stack" style="gap:12px;padding-block:14px 8px">
+    <div class="row brand">${LOGO(40)}<div style="min-width:0"><div class="wordmark">Trail Signals</div><div class="tagline">Outdoor spots, by bus and train</div></div>
+      <button type="button" class="locpill" data-a="where" aria-label="Change starting point${o ? ', now ' + esc(o.name) : ''}">${ic('pin',15)}<span>${o ? esc(o.name) : 'Set location'}</span>${ic('down',14)}</button></div>
+    <form class="search" id="searchForm" role="search">${ic('search',18,2)}<label for="q" class="sr">Search a town, area or station</label>
+      <input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="Search a town, area or station…"><button type="submit">Go</button></form>
+  </header>`;
+}
+function welcome(){
+  return `<section class="pad stack" style="gap:14px;padding-block:6px 24px">
+    <div class="radarwrap"><div class="radar" aria-hidden="true">${radarSvg(60, null)}<div class="sweep"></div><div class="you"></div></div></div>
+    <h1 style="font-family:var(--display);font-size:26px;line-height:1.1;color:var(--forest-deep)">Find a little outdoor adventure, then know how to get there.</h1>
+    <p style="color:var(--ink-2)">Trail Signals finds parks, viewpoints, walks and picnic spots you can reach by bus, train, tram or ferry, anywhere in the world.</p>
+    <button type="button" class="btn" data-a="locate">${ic('locate',20,2)}Use my location</button>
+    <button type="button" class="btn ghost" data-a="where">${ic('search',18,2)}Type where I am</button>
+    <button type="button" class="chip" data-a="demo" style="align-self:center">Or explore a demo city</button>
+  </section>`;
+}
+function radarSvg(max, su){
+  const c = 170, R = 150; const step = max <= 30 ? 10 : max <= 60 ? 15 : 30;
+  let g = `<svg viewBox="0 0 340 340" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${R + 12}" fill="var(--radar-bg)"/>`;
+  g += `<path d="M${c} ${c - R - 6}V${c + R + 6}M${c - R - 6} ${c}H${c + R + 6}" stroke="var(--radar-ring)" stroke-width="1" stroke-dasharray="2 5"/>`;
+  for (let m = step; m <= max; m += step){ const r = m/max*R; g += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--radar-ring)" stroke-width="${m === max ? 2 : 1.2}"/><text x="${c + r*0.71 + 3}" y="${c - r*0.71 - 3}" font-size="11" font-weight="700" fill="var(--radar-text)" font-family="Figtree,sans-serif">${m}′</text>`; }
+  g += `<text x="${c}" y="14" text-anchor="middle" font-size="12" font-weight="800" fill="var(--radar-text)" font-family="Figtree,sans-serif">N</text>`;
+  if (su && su.azSet && !su.polar){ const a = su.azSet*D2R, x = c + (R + 2)*Math.sin(a), y = c - (R + 2)*Math.cos(a); g += `<g><circle cx="${x}" cy="${y}" r="9" fill="#F2A65A"/><path d="M${x - 5} ${y + 1}h10" stroke="#fff" stroke-width="1.6"/><text x="${x + (Math.sin(a) < 0 ? 14 : -14)}" y="${y + 4}" text-anchor="${Math.sin(a) < 0 ? 'start' : 'end'}" font-size="10.5" font-weight="700" fill="var(--radar-text)" font-family="Figtree,sans-serif">sunset</text></g>`; }
+  return g + '</svg>';
+}
+function radar(list){
+  const o = S.origin, max = S.f.time >= 999 ? Math.max(60, Math.ceil(Math.max(0, ...list.map(s => s.total || 0))/15)*15) : S.f.time;
+  const su = o && !o.noCoords ? sunInfo(Date.now(), o.lat, o.lon) : null;
+  const pins = list.filter(s => s.total != null && s.brg != null).map(s => {
+    const r = Math.min(1, s.total/max)*150, a = s.brg*D2R, x = (170 + r*Math.sin(a))/340*100, y = (170 - r*Math.cos(a))/340*100;
+    const sig = signalOf(s.key), on = S.sel === s.key;
+    return `<button type="button" class="pin k-${s.kind}${sig ? ' sig-' + sig : ''}" style="left:${x}%;top:${y}%" data-a="sel" data-v="${s.key}" aria-pressed="${on}" aria-label="${esc(s.name)}, about ${s.total} minutes ${compass(s.brg)}">${ic(KIND[s.kind].icon, on ? 20 : 16, 2.2)}${on ? `<span class="lbl">${esc(s.name)}</span>` : ''}</button>`;
+  }).join('');
+  return `<div class="radarwrap"><div class="radar">${radarSvg(max, su)}<div class="you" title="You"></div>${pins}
+      <button type="button" class="surprise" data-a="surprise">${ic('dice',16)}Surprise me</button></div>
+    <div class="radarlegend"><span><i style="background:var(--sky)"></i>You</span><span>Rings: minutes door to door</span><span><i style="background:var(--live)"></i>Fresh good news</span><span><i style="background:var(--amber)"></i>Fresh caution</span></div></div>`;
+}
+function selCard(s){
+  const sv = !!S.saved[s.key];
+  return `<article class="card sel" aria-label="Selected spot">
+    <div class="row" style="align-items:flex-start"><a class="selmain" href="#spot-${s.key}" style="flex:1;min-width:0"><span class="thumb">${art(s)}</span>
+      <span class="stack" style="gap:5px;min-width:0"><b style="font-size:17px;line-height:1.2">${esc(s.name)}</b><span class="clamp2" style="font-size:13px;color:var(--muted)">${esc(s.blurb)}</span>
+      <span class="row" style="gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600"><span class="pill good">${bars(DIFF[s.diff].n)}${DIFF[s.diff].label}</span>${s.km != null ? `<span>${s.km.toFixed(1)} km</span>` : ''}<span class="muted">· ${esc(s.visit)}</span></span></span></a>
+      <button type="button" class="iconbtn" data-a="save" data-v="${s.key}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from saved' : 'Save ' + esc(s.name)}" style="border:0;margin:8px 8px 0 0;color:${sv ? '#C2462F' : 'var(--ink)'}">${ic('heart',22,2,sv ? 'currentColor' : 'none')}</button></div>
+    <div class="selfoot">
+      <div>${s.stop ? `<span style="color:var(--${s.stop.mode === 'metro' ? 'train' : s.stop.mode})">${ic(MODE[s.stop.mode].icon,26,2)}</span>` : ic('walk',26,2)}<span><b>${s.total != null ? '≈ ' + dur(s.total) : 'No stop nearby'}</b>${s.stop ? 'by ' + esc(MODE[s.stop.mode].label.toLowerCase()) : s.walkOnly ? 'on foot' : 'hard by transit'}</span></div>
+      <div>${ic('walk',24,2)}<span><b>${s.finalMin != null ? s.finalMin + ' min' : '–'}</b>walk ${s.walkOnly ? 'from you' : 'from the stop'}</span></div>
+    </div></article>`;
+}
+function rowCard(s){
+  const u = updatesFor(s.key)[0];
+  const sig = u ? `<span class="row" style="gap:5px;font-size:12px;font-weight:600;color:var(--${catOf(u.cat)[2]}-fg)">${ic(catOf(u.cat)[2] === 'warn' ? 'alert' : 'check',13)}${esc(catOf(u.cat)[1])} · ${ago(u.seenAt)}</span>` : '';
+  return `<a class="card rowcard" href="#spot-${s.key}"><span class="thumb">${art(s)}</span>
+    <span class="stack" style="flex:1;min-width:0;gap:4px"><b style="line-height:1.2">${esc(s.name)}</b>
+      <span style="font-size:13px;color:var(--muted)">${KIND[s.kind].label} · ${DIFF[s.diff].label}${s.brg != null ? ' · ' + compass(s.brg) : ''}</span>
+      <span class="row" style="gap:6px;flex-wrap:wrap">${s.stop ? modeBadge(s.stop.mode, lineTxt(s)) : `<span class="mode walk">${ic('walk',14)}Walk</span>`}${sig}</span></span>
+    <span style="text-align:right;flex-shrink:0"><span class="num" style="display:block;font-size:20px;color:var(--forest-deep);line-height:1">${s.total != null ? s.total : '–'}</span><span style="font-size:11px;font-weight:600;color:var(--muted)">min</span></span></a>`;
+}
+function exploreView(){
+  let b = header();
+  if (S.status === 'loading' || S.status === 'locating'){
+    b += `<section class="pad stack" style="gap:14px;padding-block:6px 24px" aria-live="polite">
+      <div class="radarwrap"><div class="radar" aria-hidden="true">${radarSvg(60, null)}<div class="sweep"></div><div class="you"></div></div></div>
+      <p style="text-align:center;font-weight:600">${esc(S.msg)}</p>
+      ${S.ctl ? '<button type="button" class="chip" data-a="cancel" style="align-self:center">Cancel</button>' : ''}</section>`;
+    return { body: b };
+  }
+  if (S.status === 'error') b += `<div class="pad" style="padding-bottom:12px"><div class="note warn" role="alert">${ic('alert',18)}<span class="stack" style="gap:8px"><span>${esc(S.msg)}</span><span class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="chip" data-a="where">Try another place</button><button type="button" class="chip" data-a="demo">Demo city</button></span></span></div></div>`;
+  if (!S.spots.length){ b += welcome(); return { body: b }; }
+  const list = filtered(), sel = list.find(s => s.key === S.sel) || list[0];
+  const beyond = S.spots.length - list.length;
+  const f = S.f, effort = Object.keys(DIFF).filter(k => f.diff[k]);
+  b += `<div class="pad stack" style="gap:10px;padding-bottom:12px">${daylight()}
+    <div class="scroll-x" role="group" aria-label="Filters">
+      <button type="button" class="chip soft" data-a="filters">${ic('clock',16)}${f.time >= 999 ? 'Any time' : 'Under ' + f.time + ' min'}</button>
+      <button type="button" class="chip soft" data-a="filters">${ic('walk',16)}${effort.length === 3 ? 'Any effort' : effort.map(k => DIFF[k].label).join(' + ') || 'No effort set'}</button>
+      <button type="button" class="chip soft" data-a="filters">${ic('leaf',16)}${ACTS.find(a => a[0] === f.act)[1]}</button>
+      <button type="button" class="chip" data-a="filters" aria-label="All filters">${ic('sliders',18)}</button></div></div>
+  <div class="pad stack" style="gap:12px">${radar(list)}${sel ? selCard(sel) : ''}</div>
+  <section class="pad stack" style="gap:10px;padding-block:18px 24px" aria-labelledby="more-h">
+    <div class="row" style="justify-content:space-between;align-items:baseline;gap:8px"><h2 id="more-h" style="font-size:17px">${list.length ? list.length + (list.length === 1 ? ' spot' : ' spots') + (f.time >= 999 ? '' : ' within ' + f.time + ' min') : 'Nothing matches'}</h2>
+      <button type="button" class="chip" data-a="refresh" style="height:36px;font-size:13px">${ic('swap',14)}Refresh</button></div>
+    ${list.map(rowCard).join('') || `<div class="empty"><b>Nothing quite fits yet</b><span class="muted" style="font-size:14px">Try a longer travel time or another activity.</span><button type="button" class="chip" data-a="reset">Reset filters</button></div>`}
+    ${beyond > 0 && list.length ? `<button type="button" class="chip" data-a="any" style="align-self:center">Show ${beyond} more beyond your filters</button>` : ''}
+    <p style="font-size:12px;color:var(--muted);margin-top:6px">${srcNote()} Found ${ago(S.foundAt)}.</p>
+  </section>`;
+  return { body: b };
+}
+
+function spotView(s){
+  const sv = !!S.saved[s.key], ups = updatesFor(s.key), top = ups[0], L = transitLinks(s), o = S.origin;
+  const su = o && !o.noCoords ? sunInfo(Date.now(), o.lat, o.lon) : null;
+  if (s.src === 'osm' && s.stop && s.stop.id && S.lines[s.stop.id] === undefined) loadLines(s);
+  const lines = s.src === 'osm' && s.stop ? S.lines[s.stop.id] : null;
+  const more = S.more[s.key];
+  const upCards = ups.map(updateCard).join('') || `<div class="card" style="padding:16px;font-size:14px;color:var(--muted)">No visitor updates in the last 14 days. Been recently? Add the first one.</div>`;
+  const nowMs = Date.now();
+  let back = '';
+  if (su && su.set && !su.polar){
+    if (nowMs < su.rise) back = `Sunrise <b>${fmt(su.rise)}</b>. Paths may be dark until then.`;
+    else if (nowMs < su.set) back = `Sunset <b>${fmt(su.set)}</b>. Leave by about <b>${fmt(su.set - (s.finalMin || 10)*60e3 - 10*60e3)}</b> to walk back to the stop in daylight.`;
+    else if (su.dusk && nowMs < su.dusk) back = `The sun has set and it's dark by <b>${fmt(su.dusk)}</b>. Pick lit paths and stay near the stop.`;
+    else back = `It's dark now. Stick to lit paths, or save this spot for tomorrow.`;
+  }
+  const body = `
+  <figure class="hero" style="margin:0">${art(s, 'art')}
+    <a class="iconbtn" href="#explore" aria-label="Back to Explore" style="left:max(16px,env(safe-area-inset-left,0px))">${ic('back',22)}</a>
+    <button type="button" class="iconbtn" data-a="save" data-v="${s.key}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from saved' : 'Save place'}" style="right:max(16px,env(safe-area-inset-right,0px));color:${sv ? '#C2462F' : 'var(--ink)'}">${ic('heart',22,2,sv ? 'currentColor' : 'none')}</button>
+    <figcaption class="cap" style="left:max(16px,env(safe-area-inset-left,0px))">Illustration · ${KIND[s.kind].label}</figcaption></figure>
+  <div class="pad stack" style="gap:20px;padding-block:18px 28px">
+    <section class="stack" style="gap:10px">
+      <h1 style="font-family:var(--display);font-size:30px;line-height:1.08;color:var(--forest-deep)">${esc(s.name)}</h1>
+      <p style="color:var(--ink-2)">${esc(s.blurb)}</p>
+      <div class="stats"><span class="pill good" style="font-size:14px;padding:6px 11px">${bars(DIFF[s.diff].n)}${DIFF[s.diff].label}</span>
+        ${s.km != null ? `<span>${ic('pin',18)}${s.km.toFixed(1)} km ${s.brg != null ? compass(s.brg) : ''}</span>` : ''}<span>${ic('clock',18)}${esc(s.visit)}</span></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill plain">${KIND[s.kind].label}</span>${s.path ? `<span class="pill plain">${esc(s.path)}</span>` : ''}${KIND[s.kind].acts.filter(a => a !== s.kind).map(a => `<span class="pill plain">${(ACTS.find(x => x[0] === a) || ['', a])[1]}</span>`).join('')}${spotSrcPill(s)}</div>
+      ${s.diffNote ? `<p style="font-size:13px;color:var(--muted)">${esc(s.diffNote)}</p>` : ''}
+    </section>
+    ${top ? `<a class="banner ${catOf(top.cat)[2] === 'warn' ? '' : 'good'}" href="#ups">${ic(catOf(top.cat)[2] === 'warn' ? 'alert' : 'chat',20)}<span style="flex:1"><b>${esc(top.text || catOf(top.cat)[1])}</b><br><span style="font-size:12.5px">Visitor report · seen ${ago(top.seenAt)}</span></span>${ic('next',18)}</a>` : ''}
+    ${back ? `<div class="note warn" role="note">${ic('sun',18)}<span>${back}</span></div>` : ''}
+    <section class="stack" style="gap:10px" aria-labelledby="get-h">
+      <h2 id="get-h" style="font-size:19px">Get there by public transport</h2>
+      <div class="card" style="overflow:hidden">
+        ${s.stop ? `<a class="transrow" href="#trip-${s.key}"><span class="ricon" style="background:var(--${s.stop.mode === 'metro' ? 'train' : s.stop.mode})">${ic(MODE[s.stop.mode].icon,22,2)}</span>
+          <span class="stack" style="flex:1;min-width:0"><b>${esc(lineTxt(s))} to ${esc(s.stop.name)}</b><span style="font-size:13px;color:var(--muted)">≈ ${dur(s.total)} door to door${s.changes ? ' · ' + s.changes + ' change' : ''} · then ${s.finalMin} min walk</span></span>${ic('next',18)}</a>`
+        : s.walkOnly ? `<a class="transrow" href="#trip-${s.key}"><span class="ricon" style="background:var(--forest)">${ic('walk',22,2)}</span><span class="stack" style="flex:1"><b>Walk there</b><span style="font-size:13px;color:var(--muted)">≈ ${s.total} min on foot</span></span>${ic('next',18)}</a>`
+        : `<div class="transrow"><span class="ricon" style="background:var(--faint)">${ic('alert',22,2)}</span><span class="stack"><b>No stop mapped within 1.5 km</b><span style="font-size:13px;color:var(--muted)">Check a journey planner for options</span></span></div>`}
+        ${L ? `<a class="transrow" href="${L.g}" target="_blank" rel="noopener"><span class="ricon" style="background:var(--sky)">${ic('clock',22,2)}</span><span class="stack" style="flex:1"><b>Live times and route</b><span style="font-size:13px;color:var(--muted)">Opens Google Maps transit directions</span></span>${ic('ext',18)}</a>
+               <a class="transrow" href="${L.m}" target="_blank" rel="noopener"><span class="ricon" style="background:var(--forest)">${ic('map',22,2)}</span><span class="stack" style="flex:1"><b>See it on the map</b><span style="font-size:13px;color:var(--muted)">Opens OpenStreetMap</span></span>${ic('ext',18)}</a>` : ''}
+      </div>
+      ${lines === 'loading' ? '<p class="est">Checking which lines stop here…</p>' : Array.isArray(lines) && lines.length ? `<p style="font-size:13px;color:var(--ink-2)"><b>Lines at ${esc(s.stop.name)}:</b> ${lines.map(esc).join(', ')} <span class="muted">(from OpenStreetMap)</span></p>` : ''}
+    </section>
+    <section id="ups" class="stack" style="gap:10px" aria-labelledby="up-h">
+      <div class="row" style="justify-content:space-between;align-items:baseline"><h2 id="up-h" style="font-size:19px">Recent visitor updates</h2><a href="#update-${s.key}" style="font-weight:700;font-size:14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none">+ Add yours</a></div>
+      <p style="font-size:13px;color:var(--muted)">Shared by people who visited. They're not live or verified, and conditions may have changed since.</p>
+      ${upCards}
+    </section>
+    ${(s.tips.length || s.facts.length || more) ? `<section class="stack" style="gap:8px"><h2 style="font-size:19px">Good to know</h2>
+      <ul style="margin:0;padding-left:20px;color:var(--ink-2);line-height:1.6">${[...s.facts, ...s.tips].map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+      ${more && more.about ? `<div class="card stack" style="padding:14px;gap:8px"><span class="pill info" style="align-self:flex-start">${ic('spark',13)}From Claude · may be inaccurate</span><p>${esc(more.about)}</p>${(more.tips || []).length ? `<ul style="margin:0;padding-left:20px;line-height:1.6">${more.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>` : ''}
+      ${more && more.err ? `<p class="est">${esc(more.err)}</p>` : ''}</section>` : ''}
+    ${s.src === 'osm' && !more ? `<button type="button" class="chip" data-a="more" data-v="${s.key}" style="align-self:flex-start">${ic('spark',16)}Ask Claude about this place</button>` : more === null ? '<p class="est">Asking Claude…</p>' : ''}
+  </div>`;
+  return { body, action: `<div class="actionbar pad"><a class="btn ghost" href="#update-${s.key}" style="padding:0 14px">${ic('chat',18)}Update</a>
+    <a class="btn" href="#trip-${s.key}" style="flex:1">Plan trip ${ic('next',18,2.4)}</a></div>` };
+}
+function updateCard(u){
+  const c = catOf(u.cat), v = Store.myVotes[u.id], n = voteCount(u.id), old = Date.now() - u.seenAt > 3*86400e3;
+  const photo = Store.photos[u.id];
+  return `<article class="card stack" style="padding:14px;gap:8px;${old ? 'opacity:.82' : ''}">
+    <div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${c[2]}">${ic(c[0],14)}${esc(c[1])}</span><span style="font-size:12px;color:var(--muted);font-weight:600">Seen ${ago(u.seenAt)}${u.where ? ' · ' + esc(u.where) : ''}</span></div>
+    ${u.text ? `<p>${esc(u.text)}</p>` : ''}
+    ${photo ? `<img src="${photo}" alt="Your photo" style="border-radius:12px;max-height:180px;object-fit:cover">` : ''}
+    ${old ? '<div style="font-size:12px;font-weight:700;color:var(--warn-fg)">Older than 3 days, so it may be out of date</div>' : ''}
+    <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--muted)">Visitor report${n.y ? ' · ' + n.y + ' still true' : ''}${n.n ? ' · ' + n.n + ' not now' : ''}</span>
+      <span class="row" style="gap:6px"><button type="button" class="vote" data-a="vote" data-v="${u.id}|yes" aria-pressed="${v === 'yes'}">Still true</button><button type="button" class="vote" data-a="vote" data-v="${u.id}|no" aria-pressed="${v === 'no'}">Not now</button></span>
+    </div></article>`;
+}
+
+function plan(s){
+  const now = Date.now(), su = S.origin && !S.origin.noCoords ? sunInfo(now, S.origin.lat, S.origin.lon) : null;
+  let leave = now;
+  if (S.trip.leave === '30') leave = now + 30*60e3;
+  else if (S.trip.leave === '60') leave = now + 60*60e3;
+  else if (S.trip.leave === 'sunset' && su && su.set) leave = Math.max(now, su.set - 35*60e3 - (s.total || 0)*60e3);
+  leave = Math.ceil(leave/60e3)*60e3;
+  const out = []; let t = leave;
+  const push = (m, min, title, sub, extra) => { out.push(Object.assign({ m, t, min, title, sub }, extra || {})); t += min*60e3; };
+  if (s.walkOnly) push('walk', s.total, 'Walk to ' + s.name, `About ${s.finalKm} km`, { final: true });
+  else if (s.stop){
+    const m = s.stop.mode, om = (s.oStop && s.oStop.mode) || m;
+    push('walk', s.walkTo, 'Walk to ' + (s.oStop ? s.oStop.name : 'your nearest stop'), s.oStop ? 'Your nearest ' + MODE[om].label.toLowerCase() + ' stop' : 'Use a journey planner to find the best stop');
+    if (s.changes){
+      const a = Math.round(s.ride*0.55), b = s.ride - a - 6;
+      push(om, a, MODE[om].label + ' towards ' + s.stop.name, 'Ride time includes waiting', { est: true });
+      push('change', 6, 'Change to the ' + MODE[m].label.toLowerCase(), 'Allow a few minutes to find the right stop');
+      push(m, Math.max(3, b), lineTxt(s) + ' to ' + s.stop.name, 'Get off at ' + s.stop.name, { est: true });
+    } else push(m, s.ride, lineTxt(s) + ' to ' + s.stop.name, 'Ride time includes waiting · get off at ' + s.stop.name, { est: true });
+    push('walk', s.finalMin, 'Final walk to ' + s.name, `About ${s.finalKm} km · ${s.finalMin} min`, { final: true });
+  }
+  const arrive = t;
+  const back = [], depart = arrive + S.trip.visit*60e3; let r = depart;
+  const pushB = (m, min, title, sub) => { back.push({ m, t: r, min, title, sub }); r += min*60e3; };
+  if (s.walkOnly) pushB('walk', s.total, 'Walk home', 'Same way back');
+  else if (s.stop){
+    pushB('walk', s.finalMin, 'Walk back to ' + s.stop.name, 'Same path as on the way in');
+    pushB(s.stop.mode, s.ride + (s.changes ? 6 : 0), lineTxt(s) + ' back', 'Times are estimates · check live times');
+    pushB('walk', s.walkTo, 'Walk home', 'From ' + (s.oStop ? s.oStop.name : 'the stop'));
+  }
+  const walkBackEnd = depart + (s.finalMin || 0)*60e3;
+  let dark = null;
+  if (su && su.set){ if (su.dusk && walkBackEnd > su.dusk) dark = 'dark'; else if (walkBackEnd > su.set) dark = 'dusk'; }
+  return { leave, arrive, out, back, depart, home: r, su, dark };
+}
+function legBadge(l){ return l.m === 'walk' ? `<span class="mode walk">${ic('walk',14)}Walk</span>` : l.m === 'change' ? `<span class="mode change">${ic('swap',14)}Change</span>` : modeBadge(l.m, MODE[l.m].label); }
+function legRow(l, inner){ return `<li class="step ${l.m}"><span class="t">${fmt(l.t)}</span><span class="rail"><span class="dot"></span><span class="line"></span></span><div class="body"><div class="row" style="gap:6px;flex-wrap:wrap">${legBadge(l)}<b style="font-size:15.5px">${esc(l.title)}</b></div>${inner}</div></li>`; }
+function walkMap(s){
+  if (!s.stop || s.stop.lat == null || s.lat == null){
+    return '';
+  }
+  const b = bearing(s.stop.lat, s.stop.lon, s.lat, s.lon)*D2R, vx = Math.sin(b), vy = -Math.cos(b);
+  const x1 = 148 - vx*95, y1 = 70 - vy*45, x2 = 148 + vx*95, y2 = 70 + vy*45;
+  return `<svg viewBox="0 0 296 140" width="100%" role="img" aria-label="Sketch of the final walk: head ${compass(b*R2D)} from the stop" style="display:block;background:var(--radar-bg)">
+    <path d="M${x1} ${y1} Q ${148 + vy*30} ${70 - vx*20} ${x2} ${y2}" stroke="var(--forest)" stroke-width="4" stroke-dasharray="1 7" stroke-linecap="round" fill="none"/>
+    <circle cx="${x1}" cy="${y1}" r="9" fill="var(--${s.stop.mode === 'metro' ? 'train' : s.stop.mode})" stroke="var(--surface)" stroke-width="3"/>
+    <circle cx="${x2}" cy="${y2}" r="9" fill="var(--forest)" stroke="var(--surface)" stroke-width="3"/>
+    <text x="${Math.min(250, Math.max(46, x1))}" y="${y1 > 70 ? Math.min(134, y1 + 22) : Math.max(14, y1 - 14)}" text-anchor="middle" font-family="Figtree,sans-serif" font-size="11" font-weight="700" fill="var(--ink)">${esc(s.stop.name.slice(0, 26))}</text>
+    <text x="${Math.min(250, Math.max(46, x2))}" y="${y2 > 70 ? Math.min(134, y2 + 22) : Math.max(14, y2 - 14)}" text-anchor="middle" font-family="Figtree,sans-serif" font-size="11" font-weight="700" fill="var(--forest-deep)">${esc(s.name.slice(0, 26))}</text>
+    <text x="282" y="18" text-anchor="middle" font-family="Figtree,sans-serif" font-size="11" font-weight="800" fill="var(--radar-text)">N↑</text></svg>`;
+}
+function tripView(s){
+  if (!s.stop && !s.walkOnly){
+    const L0 = transitLinks(s);
+    return { body: `<header class="pad row" style="gap:10px;padding-block:14px;background:var(--surface);border-bottom:1.5px solid var(--line)"><a class="iconbtn" href="#spot-${s.key}" aria-label="Back">${ic('back',22)}</a><h1 style="font-family:var(--display);font-size:23px;color:var(--forest-deep)">Plan your trip</h1></header>
+      <div class="pad stack" style="gap:14px;padding-block:18px"><div class="note warn">${ic('alert',18)}<span>No bus, train, tram or ferry stop is mapped within 1.5 km of ${esc(s.name)}, so Trail Signals can't plan this one.</span></div>
+      ${L0 ? `<a class="btn" href="${L0.g}" target="_blank" rel="noopener">${ic('ext',18)}Try Google Maps transit directions</a>` : ''}</div>` };
+  }
+  const p = plan(s), L = transitLinks(s), T = S.trip;
+  const steps = p.out.map(l => {
+    let inner = `<div style="font-size:14px;color:var(--ink-2)">${esc(l.sub)}${l.m !== 'walk' && l.m !== 'change' ? '' : ' · ' + l.min + ' min'}</div>`;
+    if (l.est) inner += `<span class="est">≈ ${l.min} min · estimated, not live</span>`;
+    if (l.final){
+      const dirs = (s.dirs || []).map((d, i) => `<li><span class="n">${i + 1}</span><span>${esc(d)}</span></li>`).join('');
+      const warn = updatesFor(s.key).filter(u => catOf(u.cat)[2] === 'warn')[0];
+      inner += `<div class="card" style="overflow:hidden;margin-top:4px">${walkMap(s)}
+        ${warn ? `<div class="note warn" style="margin:12px 14px 0;padding:8px 10px;font-size:12.5px">${ic('alert',14)}<span><b>Visitor update, ${ago(warn.seenAt)}:</b> ${esc(warn.text || catOf(warn.cat)[1])} Not verified.</span></div>` : ''}
+        ${dirs ? `<ol class="dirs">${dirs}</ol>` : ''}
+        <div style="padding:0 14px 14px;font-size:12px;color:var(--muted)">${s.src === 'ai' ? 'Directions suggested by Claude. Follow local signs.' : s.src === 'osm' ? 'Directions worked out from map data. Follow local signs.' : 'Demo directions.'}</div></div>`;
+    }
+    return legRow(l, inner);
+  }).join('') + `<li class="step arrive"><span class="t">${fmt(p.arrive)}</span><span class="rail"><span class="dot"></span></span><div class="body"><b style="font-size:16px">Arrive at ${esc(s.name)}</b><div style="font-size:14px;color:var(--ink-2)">Start exploring${p.su && p.su.set && p.arrive < p.su.set ? '. Sunset is at ' + fmt(p.su.set) : ''}.</div></div></li>`;
+  const backSteps = p.back.map(l => legRow(l, `<div style="font-size:14px;color:var(--ink-2)">${esc(l.sub)} · ${l.min} min</div>`)).join('') + `<li class="step arrive"><span class="t">${fmt(p.home)}</span><span class="rail"><span class="dot"></span></span><div class="body"><b>Home</b></div></li>`;
+  const leaveChips = [['now','Now'],['30','In 30 min'],['60','In 1 h']];
+  if (p.su && p.su.set && Date.now() < p.su.set - ((s.total || 0) + 35)*60e3 && (s.kind === 'view' || s.kind === 'peak' || s.kind === 'water' || s.kind === 'beach')) leaveChips.push(['sunset','Catch the sunset']);
+  const legsPills = p.out.map(l => `<span class="mode ${l.m}">${l.m === 'walk' ? 'Walk' : l.m === 'change' ? 'Change' : MODE[l.m].label} ${l.min}</span>`).join('');
+  const body = `
+  <header class="pad row" style="gap:10px;padding-block:14px;background:var(--surface);border-bottom:1.5px solid var(--line)">
+    <a class="iconbtn" href="#spot-${s.key}" aria-label="Back to ${esc(s.name)}">${ic('back',22)}</a><h1 style="font-family:var(--display);font-size:23px;color:var(--forest-deep)">Plan your trip</h1></header>
+  <div class="pad stack" style="gap:16px;padding-block:16px 28px">
+    <a class="card row" href="#spot-${s.key}" style="gap:12px;padding:10px;text-decoration:none;color:inherit"><span class="thumb" style="width:72px;height:72px">${art(s)}</span>
+      <span class="stack" style="gap:4px;min-width:0"><b style="font-size:18px;line-height:1.2">${esc(s.name)}</b><span class="row" style="gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)">${s.km != null ? s.km.toFixed(1) + ' km · ' : ''}${esc(s.visit)}<span class="pill good">${DIFF[s.diff].label}</span></span></span></a>
+    <section class="stack" style="gap:8px"><span class="label">Leave</span><div class="scroll-x">${leaveChips.map(([v, l]) => `<button type="button" class="chip" data-a="leave" data-v="${v}" aria-pressed="${T.leave === v}">${v === 'sunset' ? ic('sun',16) : ''}${l}</button>`).join('')}</div></section>
+    <section class="summary" aria-label="Trip summary">
+      <div class="row" style="justify-content:space-between;align-items:baseline;gap:8px"><span class="num" style="font-size:28px;line-height:1">${fmt(p.leave)} <span aria-hidden="true" style="opacity:.7">→</span><span class="sr">to</span> ${fmt(p.arrive)}</span><b>≈ ${dur((p.arrive - p.leave)/60e3)}</b></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${legsPills}</div>
+      <div style="font-size:13px;color:var(--summary-muted)">${S.src === 'demo' ? 'Demo times' : 'Estimated times. Check live departures before you go.'}${TZ.off != null ? ' Times shown in approximate local time.' : ''}</div></section>
+    <section class="stack" style="gap:10px"><h2 style="font-size:18px">Outbound journey</h2><ol class="timeline" aria-label="Outbound, step by step">${steps}</ol></section>
+    ${L ? `<a class="card row" href="${L.g}" target="_blank" rel="noopener" style="gap:12px;padding:14px;text-decoration:none;color:inherit">${ic('map',22)}<span style="flex:1"><b>Live times on the map</b><br><span style="font-size:13px;color:var(--muted)">Opens Google Maps transit directions</span></span>${ic('ext',18)}</a>` : ''}
+    <section class="card stack" style="padding:16px;gap:12px">
+      <div class="row" style="gap:12px"><h2 id="ret-l" style="font-size:18px;flex:1">Return journey</h2><button type="button" class="switch" data-a="ret" aria-labelledby="ret-l" aria-pressed="${T.ret}"></button></div>
+      ${T.ret ? `<div class="stack" style="gap:8px"><span class="label">Time at ${esc(s.name)}</span><div class="scroll-x">${[[60,'1 h'],[90,'1.5 h'],[120,'2 h'],[180,'3 h']].map(([v, l]) => `<button type="button" class="chip" data-a="visit" data-v="${v}" aria-pressed="${T.visit === v}">${l}</button>`).join('')}</div></div>
+        ${p.dark ? `<div class="note warn" role="note">${ic('moon',18)}<span><b>You'd walk back ${p.dark === 'dark' ? 'after dark' : 'at dusk'}.</b> Sunset ${fmt(p.su.set)}${p.su.dusk ? ', dark by ' + fmt(p.su.dusk) : ''}. Leave earlier, choose a shorter visit, or bring a light.</span></div>`
+          : p.su && p.su.set ? `<div class="note good" role="note">${ic('sun',18)}<span>You'll be back at the stop before sunset (${fmt(p.su.set)}).</span></div>` : ''}
+        <ol class="timeline" aria-label="Return, step by step">${backSteps}</ol>` : `<p style="font-size:14px;color:var(--muted)">Turn on to plan the way home, with a daylight check for the walk back.</p>`}
+    </section>
+  </div>`;
+  return { body, action: `<div class="actionbar pad"><a class="btn quiet" href="#spot-${s.key}" style="flex:1">Edit trip</a><button type="button" class="btn" data-a="savetrip" data-v="${s.key}" style="flex:1">${ic('bookmark',18)}Save trip</button></div>` };
+}
+
+function updateFormView(s){
+  const F = S.form;
+  if (S.posted && S.posted.spot === s.key){
+    const u = S.posted;
+    return { body: `<section class="pad stack" aria-live="polite" style="gap:14px;align-items:center;text-align:center;padding-block:40px 28px">
+      <span style="width:72px;height:72px;border-radius:50%;background:var(--good-bg);color:var(--forest);display:flex;align-items:center;justify-content:center">${ic('tick',36)}</span>
+      <h1 style="font-family:var(--display);font-size:25px;color:var(--forest-deep)">Thanks, that helps</h1>
+      <p style="color:var(--ink-2)">${u.shared ? 'Your update now shows on ' + esc(s.name) + ' for people using this page' : 'Your update is saved on this device'}, as a visitor report with the time you saw it. Others can confirm it or say it's changed.</p>
+      <div style="width:100%;text-align:left">${updateCard(u)}</div>
+      <div class="row" style="gap:10px;width:100%"><button type="button" class="btn ghost" data-a="unpost" style="flex:1">${ic('trash',18)}Remove</button><a class="btn" href="#spot-${s.key}" style="flex:1">Back to place</a></div>
+    </section>` };
+  }
+  const where = [['At the entrance','At the entrance'],['On the path','On the path'],['At the top','At the top'],['','Whole place']];
+  const when = [['now','Just now'],['hour','An hour ago'],['today','Earlier today'],['yday','Yesterday']];
+  return { body: `
+  <header class="pad row" style="gap:10px;padding-block:14px;background:var(--surface);border-bottom:1.5px solid var(--line)">
+    <a class="iconbtn" href="#spot-${s.key}" aria-label="Back">${ic('back',22)}</a><h1 style="font-family:var(--display);font-size:23px;color:var(--forest-deep)">Add an update</h1></header>
+  <form id="uform" class="pad stack" style="gap:22px;padding-block:16px 28px">
+    <div class="card row" style="gap:12px;padding:10px"><span class="thumb" style="width:72px;height:72px">${art(s)}</span><span class="stack" style="gap:4px"><b style="font-size:18px;line-height:1.2">${esc(s.name)}</b><span class="row" style="gap:8px;font-size:13px;color:var(--muted)">${s.km != null ? s.km.toFixed(1) + ' km' : ''}<span class="pill good">${DIFF[s.diff].label}</span></span></span></div>
+    <fieldset><legend style="font-size:18px;margin-bottom:2px">What did you notice?</legend><p style="color:var(--muted);font-size:14px;margin-bottom:12px">Help other walkers with current conditions.</p>
+      <div class="cats">${CATS.map(([id, l, t]) => `<button type="button" class="cat ${t === 'good' ? 'g' : ''}" data-a="cat" data-v="${id}" aria-pressed="${F.cat === id}"><span class="ci ${t}">${ic(id,18)}</span>${l}</button>`).join('')}</div></fieldset>
+    <fieldset><legend>Where?</legend><div class="row" style="gap:8px;flex-wrap:wrap">${where.map(([v, l]) => `<button type="button" class="chip" data-a="fwhere" data-v="${v}" aria-pressed="${F.where === v}">${l}</button>`).join('')}</div></fieldset>
+    <fieldset><legend>When did you see it?</legend><div class="row" style="gap:8px;flex-wrap:wrap">${when.map(([v, l]) => `<button type="button" class="chip" data-a="when" data-v="${v}" aria-pressed="${F.when === v}">${l}</button>`).join('')}</div></fieldset>
+    <div class="stack" style="gap:8px"><label for="note" style="font-weight:700;font-size:16px">Add a note <span style="font-weight:500;color:var(--muted)">(optional)</span></label>
+      <textarea id="note" rows="3" maxlength="200" placeholder="Share a short update…">${esc(F.note)}</textarea><span id="count" style="font-size:12px;color:var(--muted);align-self:flex-end">${F.note.length}/200</span></div>
+    <div class="stack" style="gap:8px"><span style="font-weight:700;font-size:16px">Add a photo <span style="font-weight:500;color:var(--muted)">(optional)</span></span>
+      <label class="photobox">${F.photo ? `<img src="${F.photo}" alt="Photo preview">` : ic('camera',22) + 'Add photo'}<input id="photo" type="file" accept="image/*" class="sr"></label>
+      <span style="font-size:12px;color:var(--muted)">Photos stay on this device for now.</span></div>
+    <div class="note info" role="note">${ic('info',18)}<span>Updates show as <b>visitor reports</b> with the time you saw them. They fade after 3 days and disappear after 14. Please don't include anyone's personal details. In an emergency, call local emergency services.</span></div>
+    <button type="submit" class="btn" ${F.cat ? '' : 'disabled'}>${F.cat ? 'Submit update' : 'Choose what you noticed'}</button>
+  </form>` };
+}
+
+function savedView(){
+  const list = Object.values(S.saved).map(x => x.spot).filter(Boolean);
+  return { body: `<div class="pad stack" style="gap:12px;padding-block:18px 28px"><h1 style="font-family:var(--display);font-size:26px;color:var(--forest-deep)">Saved</h1>
+    ${list.length ? list.map(rowCard).join('') : `<div class="empty"><span style="color:#C2462F">${ic('heart',28,2)}</span><b>Nothing saved yet</b><span class="muted" style="font-size:14px">Tap the heart on any spot to keep it here for a free afternoon.</span><a class="chip" href="#explore">Find somewhere</a></div>`}</div>` };
+}
+function tripsView(){
+  const list = S.trips.slice().sort((a, b) => b.savedAt - a.savedAt);
+  return { body: `<div class="pad stack" style="gap:12px;padding-block:18px 28px"><h1 style="font-family:var(--display);font-size:26px;color:var(--forest-deep)">Trips</h1>
+    ${list.length ? list.map(t => `<div class="card row" style="gap:12px;padding:10px"><a class="row" href="#trip-${t.key}" style="gap:12px;flex:1;min-width:0;text-decoration:none;color:inherit"><span class="thumb" style="width:60px;height:60px">${art(t.spot)}</span>
+        <span class="stack" style="gap:3px;min-width:0"><b>${esc(t.spot.name)}</b><span style="font-size:13px;color:var(--muted)">${esc(t.label)}</span><span class="est">Saved ${ago(t.savedAt)}</span></span></a>
+        <button type="button" class="iconbtn" data-a="rmtrip" data-v="${t.key}" aria-label="Delete trip to ${esc(t.spot.name)}" style="border:0">${ic('trash',18)}</button></div>`).join('')
+      : `<div class="empty">${ic('bus',28,2)}<b>No trips yet</b><span class="muted" style="font-size:14px">Plan a trip from any spot and tap Save trip.</span><a class="chip" href="#explore">Explore</a></div>`}</div>` };
+}
+function updatesView(){
+  const list = allUpdates().slice(0, 40);
+  const nameOf = u => { const s = getSpot(u.spot); return s ? s.name : (u.spotName || 'A place'); };
+  return { body: `<div class="pad stack" style="gap:12px;padding-block:18px 28px"><h1 style="font-family:var(--display);font-size:26px;color:var(--forest-deep)">Updates</h1>
+    <p style="color:var(--muted);font-size:14px">The latest signals from visitors${Store.db ? ' using this page' : ' on this device'}. Not live, not verified.</p>
+    ${S.spots.length ? `<a class="btn" href="#update-${S.sel || S.spots[0].key}">${ic('chat',18)}Add an update</a>` : ''}
+    ${list.length ? list.map(u => `<div class="stack" style="gap:6px">${getSpot(u.spot) ? `<a href="#spot-${u.spot}" style="font-weight:700;text-decoration:none">${esc(nameOf(u))}</a>` : `<b>${esc(nameOf(u))}</b>`}${updateCard(u)}</div>`).join('')
+      : `<div class="empty">${ic('chat',28,2)}<b>No updates in the last 14 days</b><span class="muted" style="font-size:14px">Spotted mud, a closed gate or a great view? Share it from the place's page.</span></div>`}</div>` };
+}
+
+/* ---------------- sheets ---------------- */
+function sheet(){
+  if (!S.sheet) return '';
+  let c = '';
+  if (S.sheet === 'filters'){
+    const f = S.f;
+    const grp = (title, items) => `<div class="stack" style="gap:8px"><span class="label">${title}</span><div class="row" style="gap:8px;flex-wrap:wrap">${items}</div></div>`;
+    c = `<h2 id="sheet-h" style="font-size:20px">Filters</h2>
+      ${grp('Travel time, door to door', [[20,'≤ 20 min'],[30,'≤ 30 min'],[45,'≤ 45 min'],[60,'≤ 60 min'],[999,'Any']].map(([v, l]) => `<button type="button" class="chip" data-a="time" data-v="${v}" aria-pressed="${f.time === v}">${l}</button>`).join(''))}
+      ${grp('Walking difficulty', Object.keys(DIFF).map(k => `<button type="button" class="chip" data-a="diff" data-v="${k}" aria-pressed="${!!f.diff[k]}">${bars(DIFF[k].n)}${DIFF[k].label}</button>`).join(''))}
+      ${grp('Activity', ACTS.map(([v, l]) => `<button type="button" class="chip" data-a="act" data-v="${v}" aria-pressed="${f.act === v}">${l}</button>`).join(''))}
+      <div class="row" style="gap:10px"><button type="button" class="btn quiet" data-a="reset" style="flex:1">Reset</button><button type="button" class="btn" data-a="close" style="flex:2">Show ${filtered().length} spots</button></div>`;
+  } else {
+    const ex = ['Edinburgh','Kyoto','Vancouver','Cape Town','São Paulo','Berlin','Melbourne','Mexico City'];
+    c = `<h2 id="sheet-h" style="font-size:20px">Where are you starting from?</h2>
+      ${S.whereMsg ? `<div class="note warn">${ic('info',18)}<span>${esc(S.whereMsg)}</span></div>` : ''}
+      <button type="button" class="btn" data-a="locate">${ic('locate',20,2)}Use my location</button>
+      <form id="whereForm" class="search">${ic('search',18,2)}<label for="wq" class="sr">Town, neighbourhood or station</label><input id="wq" type="search" enterkeyhint="search" autocomplete="off" placeholder="Town, neighbourhood or station"><button type="submit">Go</button></form>
+      <div class="stack" style="gap:8px"><span class="label">Or try somewhere</span><div class="row" style="gap:8px;flex-wrap:wrap">${ex.map(x => `<button type="button" class="chip" data-a="place" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>
+      <button type="button" class="chip" data-a="demo" style="align-self:flex-start">Explore the demo city</button>
+      <p style="font-size:12px;color:var(--muted)">With location: places and stops come from OpenStreetMap. Where live map data can't load, Claude suggests spots instead, clearly labelled.</p>`;
+  }
+  return `<div class="scrim" data-a="close"></div><div class="sheet pad stack" role="dialog" aria-modal="true" aria-labelledby="sheet-h" style="gap:16px"><div class="grab" aria-hidden="true"></div>${c}</div>`;
+}
+
+/* ---------------- render ---------------- */
+const main = document.getElementById('main'), action = document.getElementById('action'), tabsEl = document.getElementById('tabs'), sheetRoot = document.getElementById('sheetroot');
+function route(){
+  const h = (location.hash || '#explore').slice(1), i = h.indexOf('-');
+  const v = i < 0 ? h : h.slice(0, i), id = i < 0 ? '' : h.slice(i + 1);
+  return { v: ['explore','spot','trip','update','saved','trips','updates'].includes(v) ? v : 'explore', id };
+}
+let pending = false;
+function soft(){
+  const a = document.activeElement;
+  if (a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')){ pending = true; return; }
+  const r = route().v; if (r === 'spot' || r === 'updates' || r === 'explore' || r === 'update' || r === 'trip') render(true);
+}
+function render(keep){
+  pending = false;
+  const r = route(), y = main.scrollTop;
+  let out;
+  if (r.v === 'spot' || r.v === 'trip' || r.v === 'update'){
+    const s = getSpot(r.id);
+    if (!s){ if (location.hash !== '#explore') location.replace('#explore'); r.v = 'explore'; out = exploreView(); }
+    else out = r.v === 'spot' ? spotView(s) : r.v === 'trip' ? tripView(s) : updateFormView(s);
+  } else out = r.v === 'saved' ? savedView() : r.v === 'trips' ? tripsView() : r.v === 'updates' ? updatesView() : exploreView();
+  main.innerHTML = out.body;
+  action.innerHTML = out.action || '';
+  const tv = r.v === 'spot' ? 'explore' : r.v === 'trip' ? 'trips' : r.v === 'update' ? 'updates' : r.v;
+  const tab = (k, href, icon, label) => `<a class="tab" href="${href}" ${tv === k ? 'aria-current="page"' : ''}>${ic(icon, 23, tv === k ? 2.5 : 2)}${label}</a>`;
+  tabsEl.innerHTML = tab('explore','#explore','compass','Explore') + tab('saved','#saved','heart','Saved') + tab('trips','#trips','bus','Trips') + tab('updates','#updates','chat','Updates');
+  const hadSheet = !!sheetRoot.firstChild;
+  sheetRoot.innerHTML = sheet();
+  if (S.sheet && !hadSheet){ const f = sheetRoot.querySelector('#wq') || sheetRoot.querySelector('button'); if (f) setTimeout(() => f.focus(), 30); }
+  main.scrollTop = keep ? y : 0;
+}
+let toastT;
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2800); }
+
+async function loadLines(s){
+  const id = s.stop.id; S.lines[id] = 'loading';
+  try {
+    const d = await overpass(`[out:json][timeout:15];node(${id});rel(bn)["type"="route"]["route"~"^(bus|train|tram|subway|light_rail|ferry|trolleybus|monorail)$"];out tags;`);
+    const set = new Set(); (d.elements || []).forEach(e => { const t = e.tags || {}; const l = t.ref || t.name; if (l) set.add(l.length > 18 ? l.slice(0, 18) + '…' : l); });
+    S.lines[id] = [...set].slice(0, 12);
+    if (S.lines[id].length && !s.stop.lines.length) s.stop.lines = S.lines[id].slice(0, 2);
+  } catch(e){ S.lines[id] = []; }
+  if (route().v === 'spot') soft();
+}
+async function askMore(s){
+  const sample = await getSample();
+  if (!sample){ S.more[s.key] = { err: "Claude isn't available in this view." }; render(true); return; }
+  S.more[s.key] = null; render(true);
+  try {
+    const d = await sample.json(`Give practical, friendly info about the outdoor place "${s.name}" (${KIND[s.kind].label}) at coordinates ${s.lat}, ${s.lon}, near ${S.origin ? S.origin.name : 'the city'}. Reply with JSON only: {"about": string (max 300 chars), "tips": [up to 3 short practical tips for a casual visitor arriving by public transport]}. If you don't know this exact place, say so in "about" and keep the tips general.`, { modelTier: 'quick' });
+    S.more[s.key] = { about: String((d && d.about) || '').slice(0, 400), tips: (Array.isArray(d && d.tips) ? d.tips : []).slice(0, 3).map(t => String(t).slice(0, 160)) };
+  } catch(e){ S.more[s.key] = { err: aiErr(e) }; }
+  if (route().v === 'spot') render(true);
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const a = b.dataset.a, v = b.dataset.v;
+  switch (a){
+    case 'where': S.sheet = 'where'; S.whereMsg = ''; break;
+    case 'filters': S.sheet = 'filters'; break;
+    case 'close': S.sheet = null; break;
+    case 'locate': useLocation(); return;
+    case 'place': searchPlace(v); return;
+    case 'demo': { S.sheet = null; const d = demoData(); done(d.origin, d.spots, 'demo'); toast('Demo city: places are made up'); return; }
+    case 'cancel': if (S.ctl) S.ctl.abort(); S.ctl = null; S.status = S.spots.length ? 'ready' : 'idle'; break;
+    case 'refresh': { const o = S.origin; if (!o) break; if (S.src === 'demo'){ toast('Demo city refreshed'); break; } if (o.source === 'ai' || S.src === 'ai') aiFind(o.name, o.noCoords ? null : o); else findAround(o, o.name); return; }
+    case 'time': S.f.time = +v; saveF(); break;
+    case 'act': S.f.act = v; saveF(); break;
+    case 'diff': S.f.diff[v] = !S.f.diff[v]; saveF(); break;
+    case 'reset': S.f = { time: 45, act: 'all', diff: { easy: true, moderate: true, hilly: true } }; saveF(); break;
+    case 'any': S.f = { time: 999, act: 'all', diff: { easy: true, moderate: true, hilly: true } }; saveF(); break;
+    case 'sel': S.sel = v; break;
+    case 'surprise': {
+      const now = Date.now(), su = S.origin && !S.origin.noCoords ? sunInfo(now, S.origin.lat, S.origin.lon) : null;
+      let pool = filtered().filter(s => s.total != null && s.key !== S.sel);
+      if (su && su.set && now < su.set) { const ok = pool.filter(s => now + (s.total*2 + 45)*60e3 < su.set); if (ok.length) pool = ok; }
+      if (!pool.length){ toast('Widen your filters for more surprises'); return; }
+      const s = pool[Math.floor(Math.random()*pool.length)]; S.sel = s.key; render(true); toast(`How about ${s.name}? About ${s.total} min away`); return;
+    }
+    case 'save': {
+      const s = getSpot(v); if (!s) return;
+      if (S.saved[v]) delete S.saved[v]; else S.saved[v] = { spot: s, at: Date.now() };
+      LS.set('ts-saved', S.saved); toast(S.saved[v] ? 'Saved' : 'Removed from saved'); break;
+    }
+    case 'vote': {
+      const [id, val] = v.split('|'); const cur = Store.myVotes[id], next = cur === val ? null : val;
+      if (next) Store.myVotes[id] = next; else delete Store.myVotes[id]; LS.set('ts-myvotes', Store.myVotes);
+      if (Store.db){ const ref = Store.db.collection('votes').doc(id + '_' + VID); (next ? ref.set({ u: id, v: next, at: Date.now() }) : ref.delete()).catch(() => toast('Saved on this device only')); }
+      break;
+    }
+    case 'more': askMore(getSpot(v)); return;
+    case 'leave': S.trip.leave = v; break;
+    case 'visit': S.trip.visit = +v; break;
+    case 'ret': S.trip.ret = !S.trip.ret; break;
+    case 'savetrip': {
+      const s = getSpot(v); if (!s) return; const p = plan(s);
+      S.trips = S.trips.filter(t => t.key !== v);
+      S.trips.push({ key: v, spot: s, savedAt: Date.now(), label: `Leave ${fmt(p.leave)} · arrive ${fmt(p.arrive)}${S.trip.ret ? ' · home ' + fmt(p.home) : ''}` });
+      LS.set('ts-trips', S.trips); toast('Trip saved to Trips'); return;
+    }
+    case 'rmtrip': S.trips = S.trips.filter(t => t.key !== v); LS.set('ts-trips', S.trips); break;
+    case 'cat': S.form.cat = S.form.cat === v ? null : v; break;
+    case 'fwhere': S.form.where = v; break;
+    case 'when': S.form.when = v; break;
+    case 'unpost': {
+      const u = S.posted; if (!u) break;
+      if (u.shared && Store.db) Store.db.doc('updates/' + u.id).delete().catch(() => {});
+      Store.local = Store.local.filter(x => x.id !== u.id); LS.set('ts-updates', Store.local);
+      delete Store.photos[u.id]; LS.set('ts-photos', Store.photos);
+      S.posted = null; toast('Update removed'); break;
+    }
+    default: return;
+  }
+  render(true);
+});
+document.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (e.target.id === 'searchForm'){ const q = document.getElementById('q'); searchPlace(q.value); return; }
+  if (e.target.id === 'whereForm'){ const q = document.getElementById('wq'); searchPlace(q.value); return; }
+  if (e.target.id === 'uform'){
+    const F = S.form, s = getSpot(route().id); if (!F.cat || !s) return;
+    const off = { now: 0, hour: 60, today: 180, yday: 1440 }[F.when] || 0;
+    const data = { spot: s.key, spotName: s.name, cat: F.cat, text: F.note.trim().slice(0, 200), where: F.where, seenAt: Date.now() - off*60e3, createdAt: Date.now() };
+    let u = null;
+    if (Store.db){ try { const ref = await Store.db.collection('updates').add(data); u = { id: ref.id, ...data, shared: true }; Store.mine[ref.id] = 1; LS.set('ts-mine', Store.mine); } catch(err){ toast('Saved on this device only'); } }
+    if (!u){ u = { id: 'l' + Date.now().toString(36), ...data, shared: false }; Store.local.unshift(u); LS.set('ts-updates', Store.local.slice(0, 200)); }
+    if (F.photo){ Store.photos[u.id] = F.photo; LS.set('ts-photos', Store.photos); }
+    S.posted = u; S.form = { cat: null, where: 'On the path', when: 'now', note: '', photo: null };
+    render(false);
+  }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'note'){ S.form.note = e.target.value.slice(0, 200); const c = document.getElementById('count'); if (c) c.textContent = S.form.note.length + '/200'; }
+});
+document.addEventListener('focusout', () => { setTimeout(() => { if (pending) soft(); }, 50); });
+document.addEventListener('change', e => {
+  if (e.target.id === 'photo' && e.target.files && e.target.files[0]){
+    const file = e.target.files[0], img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, 640/Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); S.form.photo = c.toDataURL('image/jpeg', 0.72); URL.revokeObjectURL(url); render(true); };
+    img.onerror = () => { URL.revokeObjectURL(url); toast("That photo couldn't be read"); };
+    img.src = url;
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet){ S.sheet = null; render(true); } });
+window.addEventListener('hashchange', () => {
+  const r = route();
+  if (r.v !== 'update') S.posted = null;
+  if (r.v === 'update' && S.posted && S.posted.spot !== r.id) S.posted = null;
+  S.sheet = null; render(false);
+  if (r.v === 'spot' && location.hash === '#ups'){ const el = document.getElementById('ups'); if (el) el.scrollIntoView(); }
+});
+document.addEventListener('click', e => { const a = e.target.closest('a[href="#ups"]'); if (a){ e.preventDefault(); const el = document.getElementById('ups'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } });
+
+render(false);
+initDb();
+setInterval(() => { if (route().v === 'explore' && !S.sheet && !(document.activeElement && document.activeElement.tagName === 'INPUT')) render(true); }, 60000);
+})();
+</script>
+
+</body></html>

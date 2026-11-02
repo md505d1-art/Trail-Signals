@@ -1,8 +1,34 @@
 # Trail Signals
 
-A mobile app for casual outdoor explorers: find a nearby walk, park, viewpoint or picnic spot, check what recent visitors noticed, and get there by bus or train, final walk included.
+A mobile app for casual outdoor explorers. It finds a nearby walk, park, viewpoint or picnic spot, shows what recent visitors noticed, and gets you there by bus, train, tram or ferry, final walk included. It works in any country.
 
-**Live design canvas:** https://claude.ai/artifact/6i7kFvX62BcfV5mNAHgcPd (private until shared from its Share menu)
+## The app
+
+- **Open on your phone (Claude app):** https://claude.ai/artifact/TbWcUSnZczmkCFMdb2nC3z (private until shared from its Share menu)
+- **Web version:** [`index.html`](index.html) at the repo root. To host it, turn on GitHub Pages for this branch (Settings → Pages → deploy from branch, root folder). The page must be served over HTTPS for location to work.
+- **Source:** [`app/trail-signals.html`](app/trail-signals.html). This is the page body; `index.html` is the same content wrapped in a standalone HTML document.
+
+### How it finds places
+
+| Where it runs | Your location | Places and stops | Travel times |
+|---|---|---|---|
+| Web version (`index.html`) | Device GPS, or type any town | Live from OpenStreetMap (Overpass API), with Nominatim for place names | Estimated from distance and stop type, clearly labelled |
+| Claude app artifact | Type any town, area or station (the app sandbox blocks GPS and outside map data) | Suggested by Claude, labelled "Suggested by Claude · check details" | Typical times from Claude, labelled as such |
+| Anywhere | Demo city | Made-up sample places | Made up |
+
+Sunrise, sunset and dusk are calculated on the device for the starting point, so the daylight warnings work anywhere. Every spot links to Google Maps transit directions and OpenStreetMap for live times.
+
+### Screens
+
+- **Explore:** brand header, a location pill, place search, a daylight bar and compact filter chips. Below that is the **Signal radar**: you're in the middle, the rings are minutes door to door, and each spot sits in its real compass direction. Spots pulse green or amber when visitors have reported something in the last 3 days. A marker shows where the sun sets. There's also a featured-spot card, "Surprise me", and the full list.
+- **Place details:** illustration (generated per place and time of day), stats, latest-update banner, daylight advice, public transport options, lines at the stop, visitor updates with "Still true" / "Not now", and tips.
+- **Plan your trip:** leave now, later or "Catch the sunset". You get an outbound timeline with a final-walk sketch and directions. A return-journey toggle lets you choose how long to stay and checks whether you'll walk back in daylight. Trips can be saved.
+- **Add an update:** pick what you noticed, where and when, then add a note and an optional photo. In the Claude artifact, updates are shared with everyone who can use the page; elsewhere they stay on the device.
+- **Saved, Trips, Updates** tabs.
+
+## Earlier design canvas
+
+The first static design (four interactive artboards): https://claude.ai/artifact/6i7kFvX62BcfV5mNAHgcPd (private until shared from its Share menu)
 
 The design source is in [`design/project/`](design/project). Each screen is a self-contained, interactive `.dc.html` artboard at 390 px phone width, laid out by `design/project/canvas.json`.
 

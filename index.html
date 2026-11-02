@@ -121,7 +121,7 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .you{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--sky);border:3px solid var(--surface);box-shadow:0 0 0 6px color-mix(in srgb,var(--sky) 22%,transparent)}
 .pin{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;border:2.5px solid var(--surface);background:var(--forest);color:var(--on-forest);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-.pin.k-view,.pin.k-peak{background:#3D6E8F}.pin.k-water,.pin.k-beach,.pin.k-falls{background:#0F6E73}.pin.k-picnic{background:#8A5A1E}
+.pin.k-view,.pin.k-peak{background:#3D6E8F}.pin.k-cafe,.pin.k-icecream,.pin.k-bakery,.pin.k-market,.pin.k-eat{background:#B5532A}.pin.k-water,.pin.k-beach,.pin.k-falls{background:#0F6E73}.pin.k-picnic{background:#8A5A1E}
 .pin[aria-pressed="true"]{width:44px;height:44px;z-index:3;outline:3px solid var(--amber);outline-offset:1px}
 .pin .lbl{position:absolute;top:100%;margin-top:6px;left:50%;transform:translateX(-50%);background:var(--forest-deep);color:var(--bg);font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;pointer-events:none;max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .pin.sig-good::after,.pin.sig-warn::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2.5px solid var(--live);animation:ping 2.2s ease-out infinite}
@@ -264,8 +264,16 @@ const P = {
   busy:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M18 15c2 .5 3 2 3 5"/>',
   fac:'<path d="M6 21V3h12v18M3 21h18M14 12h.01"/>',
   bookmark:'<path d="M6 3h12v18l-6-4-6 4z"/>',
-  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  food:'<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1-3 3-3 6s1 4 3 4"/>',
+  cafe:'<path d="M4 9h12v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>',
+  icecream:'<path d="M8 10a4 4 0 1 1 8 0M7.5 10h9L12 21z"/>',
+  basket:'<path d="M3 10h18l-2 10H5zM8 10l4-6 4 6M9 14v3M15 14v3"/>',
+  offline:'<path d="M2 8.5a15 15 0 0 1 4-2.5M22 8.5A15 15 0 0 0 10 5.3M5 12a10 10 0 0 1 3-2M19 12a10 10 0 0 0-3.5-2.1M8.5 15.5a5 5 0 0 1 7 0M12 19h.01M3 3l18 18"/>',
+  download:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'
 };
+const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
+const WEB_URL = 'WEB_URL_PLACEHOLDER';
 const ic = (n, s = 18, w = 2.2, fill) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${fill || 'none'}" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || P.info}</svg>`;
 const LOGO = s => `<svg width="${s}" height="${Math.round(s*0.85)}" viewBox="0 0 40 34" aria-hidden="true"><path d="M1 33L14 11l13 22z" fill="var(--forest)"/><path d="M13 33l12-19 14 19z" fill="var(--leaf)"/><path d="M25 7a7 7 0 0 1 7 7M25 2a12 12 0 0 1 12 12" stroke="var(--sky)" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="25" cy="14" r="2.6" fill="var(--sky)"/></svg>`;
 
@@ -324,8 +332,28 @@ const KIND = {
   water:  { label:'Waterside', icon:'water', acts:['water','walk'], diff:'easy', visit:'1–2 h', blurb:'A lake, river or reservoir with water to walk beside.' },
   beach:  { label:'Beach', icon:'water', acts:['water','picnic'], diff:'easy', visit:'2 h+', blurb:'A named beach. Check tides and conditions before you go.' },
   falls:  { label:'Waterfall', icon:'water', acts:['water','walk'], diff:'moderate', visit:'1–2 h', blurb:'A mapped waterfall. Paths nearby can be wet and slippery.' },
-  picnic: { label:'Picnic spot', icon:'picnic', acts:['picnic','park'], diff:'easy', visit:'about 1 h', blurb:'A mapped picnic site, often with tables or benches.' }
+  picnic: { label:'Picnic spot', icon:'picnic', acts:['picnic','park'], diff:'easy', visit:'about 1 h', blurb:'A mapped picnic site, often with tables or benches.' },
+  cafe:   { label:'Café', icon:'cafe', acts:['food'], diff:'easy', visit:'30–60 min', blurb:'A café worth the trip.', food:true },
+  icecream:{ label:'Ice cream', icon:'icecream', acts:['food'], diff:'easy', visit:'20–30 min', blurb:'Ice cream to reward the walk.', food:true },
+  bakery: { label:'Bakery', icon:'basket', acts:['food','picnic'], diff:'easy', visit:'15–30 min', blurb:'Pick up picnic supplies on the way.', food:true },
+  market: { label:'Food market', icon:'basket', acts:['food','picnic'], diff:'easy', visit:'about 1 h', blurb:'Check which days and hours the market runs.', food:true },
+  eat:    { label:'Place to eat', icon:'food', acts:['food'], diff:'easy', visit:'about 1 h', blurb:'A well-known place to eat.', food:true }
 };
+function foodKind(t){
+  if (t.amenity === 'marketplace') return 'market';
+  if (t.amenity === 'ice_cream' || t.cuisine === 'ice_cream') return 'icecream';
+  if (t.shop === 'bakery' || t.shop === 'pastry') return 'bakery';
+  if (t.amenity === 'cafe') return 'cafe';
+  return 'eat';
+}
+function foodLine(t){
+  const shop = { bakery:'Bakery', pastry:'Pastry shop', convenience:'Corner shop', supermarket:'Supermarket', deli:'Deli', greengrocer:'Greengrocer' }[t.shop];
+  const am = { cafe:'Café', ice_cream:'Ice cream', restaurant:'Restaurant', fast_food:'Takeaway', pub:'Pub', food_court:'Food court', marketplace:'Food market' }[t.amenity];
+  const bits = [am || shop || 'Food'];
+  if (t.cuisine && t.amenity !== 'ice_cream') bits.push(String(t.cuisine).split(';').slice(0, 2).join(', ').replace(/_/g, ' '));
+  if (t.outdoor_seating === 'yes') bits.push('outdoor seating');
+  return bits.join(' · ');
+}
 const MODE = { bus:{label:'Bus',icon:'bus',speed:17,wait:6}, tram:{label:'Tram',icon:'tram',speed:18,wait:5}, metro:{label:'Metro',icon:'train',speed:30,wait:4}, train:{label:'Train',icon:'train',speed:38,wait:8}, ferry:{label:'Ferry',icon:'ferry',speed:20,wait:10} };
 const DIFF = { easy:{label:'Easy',n:1}, moderate:{label:'Moderate',n:2}, hilly:{label:'Hilly',n:3} };
 const bars = n => `<span class="bars" aria-hidden="true"><i></i><i class="${n<2?'off':''}"></i><i class="${n<3?'off':''}"></i></span>`;
@@ -333,6 +361,8 @@ const CATS = [['mud','Muddy','warn'],['block','Closed path','warn'],['gate','Gat
               ['view','Great views','good'],['leaf','Wildlife & flowers','good'],['busy','Busy','info'],['fac','Toilets / café closed','info']];
 const catOf = id => CATS.find(c => c[0] === id) || CATS[0];
 
+const ACTS = [['all','Anything'],['walk','Walks'],['park','Parks'],['view','Viewpoints'],['picnic','Picnic spots'],['water','Waterside'],['food','Food spots']];
+const actLabel = v => (ACTS.find(a => a[0] === v) || ACTS[0])[1];
 /* ---------------- state ---------------- */
 const S = {
   origin: null, spots: [], src: null, foundAt: 0,
@@ -342,14 +372,22 @@ const S = {
   saved: LS.get('ts-saved', {}), trips: LS.get('ts-trips', []),
   trip: { leave: 'now', visit: 90, ret: true },
   form: { cat: null, where: 'On the path', when: 'now', note: '', photo: null },
-  posted: null, more: {}, lines: {}
+  posted: null, more: {}, lines: {}, areas: LS.get('ts-areas', []), lastQuery: null, scanStart: 0
 };
+if (!ACTS.some(a => a[0] === S.f.act)) S.f.act = 'all';
 const last = LS.get('ts-last', null);
-if (last && last.spots && last.spots.length && Date.now() - last.foundAt < 24*3600e3){
+if (last && last.spots && last.spots.length && last.spots.every(x => KIND[x.kind])){
   Object.assign(S, { origin: last.origin, spots: last.spots, src: last.src, foundAt: last.foundAt, status: 'ready' });
   S.sel = S.spots[0] && S.spots[0].key; setTZ(S.origin);
 }
 const saveF = () => LS.set('ts-f', S.f);
+function persistLast(){
+  if (!S.origin || !S.spots.length) return;
+  LS.set('ts-last', { origin: S.origin, spots: S.spots, src: S.src, foundAt: S.foundAt });
+  const id = areaId(); const i = S.areas.findIndex(a => a.id === id);
+  if (i >= 0){ S.areas[i] = { ...S.areas[i], spots: S.spots }; LS.set('ts-areas', S.areas); }
+}
+const areaId = () => S.origin ? hash36(S.origin.name + S.origin.lat.toFixed(2) + S.origin.lon.toFixed(2) + S.src) : '';
 function getSpot(key){
   return S.spots.find(s => s.key === key) || (S.saved[key] && S.saved[key].spot) || ((S.trips.find(t => t.key === key) || {}).spot) || null;
 }
@@ -390,15 +428,22 @@ async function fetchJSON(url, opt = {}, ms = 15000){
   try { const r = await fetch(url, { ...opt, signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
   finally { clearTimeout(t); }
 }
-const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-async function overpass(q, signal){
-  let err;
-  for (const u of OVERPASS){
-    try { return await fetchJSON(u, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal }, 30000); }
-    catch(e){ if (signal && signal.aborted) throw e; err = e; }
-  }
-  throw err;
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+const aborted = () => { const e = new Error('Aborted'); e.name = 'AbortError'; return e; };
+/* Ask several public Overpass servers; the first good answer wins and the rest are cancelled. */
+async function overpass(q, signal, ms = 25000){
+  if (signal && signal.aborted) throw aborted();
+  const ctls = OVERPASS.map(() => new AbortController());
+  const stop = () => ctls.forEach(c => c.abort());
+  if (signal) signal.addEventListener('abort', stop, { once: true });
+  const one = i => fetchJSON(OVERPASS[i], { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctls[i].signal }, ms)
+    .then(d => { if (!d || !Array.isArray(d.elements) || (d.remark && /error|timed out|out of memory/i.test(d.remark) && !d.elements.length)) throw new Error('Overpass: ' + ((d && d.remark) || 'bad answer')); return d; });
+  const later = (i, wait) => new Promise((res, rej) => setTimeout(() => ctls[i].signal.aborted ? rej(aborted()) : one(i).then(res, rej), wait));
+  try { return await Promise.any(OVERPASS.map((u, i) => i < 2 ? one(i) : later(i, 3500*(i - 1)))); }
+  catch(e){ if (signal && signal.aborted) throw aborted(); throw (e && e.errors && e.errors[0]) || e; }
+  finally { stop(); if (signal) signal.removeEventListener('abort', stop); }
 }
+function bbox(lat, lon, m){ const dLat = m/111320, dLon = m/(111320*Math.max(0.2, Math.cos(lat*D2R))); return [lat - dLat, lon - dLon, lat + dLat, lon + dLon].map(v => v.toFixed(5)).join(','); }
 function classify(t){
   if (t.tourism === 'viewpoint') return 'view';
   if (t.natural === 'peak') return 'peak';
@@ -419,53 +464,68 @@ function stopMode(t){
 }
 const walkMin = km => Math.max(1, Math.round(km*1.25/4.8*60));
 
-async function osmFind(o, signal){
-  const R = 14000, A = `(around:${R},${o.lat},${o.lon})`;
-  const q = `[out:json][timeout:25];(
-nwr["tourism"="viewpoint"]["name"]${A};
-nwr["leisure"="park"]["name"]["wikidata"]${A};
-nwr["leisure"="nature_reserve"]["name"]${A};
-nwr["boundary"="national_park"]["name"]${A};
-nwr["leisure"="garden"]["name"]["wikidata"]${A};
-nwr["natural"~"^(peak|beach|wood|water)$"]["name"]["wikidata"]${A};
-nwr["waterway"="waterfall"]["name"]${A};
-nwr["tourism"="picnic_site"]["name"]${A};
-);out center tags 300;`;
+async function osmFind(o, signal, onStep){
+  const B = bbox(o.lat, o.lon, 10000), F = bbox(o.lat, o.lon, 6000), N = bbox(o.lat, o.lon, 2500);
+  const q = `[out:json][timeout:20];(
+nw["tourism"="viewpoint"]["name"](${B});
+nwr["leisure"="park"]["name"]["wikidata"](${B});
+nwr["leisure"="nature_reserve"]["name"](${B});
+rel["boundary"="national_park"]["name"](${B});
+nw["leisure"="garden"]["name"]["wikidata"](${B});
+nw["natural"~"^(peak|beach|water)$"]["name"]["wikidata"](${B});
+nw["waterway"="waterfall"]["name"](${B});
+nw["tourism"="picnic_site"]["name"](${B});
+nw["amenity"="marketplace"]["name"](${F});
+nw["amenity"~"^(cafe|ice_cream|restaurant|food_court)$"]["name"]["wikidata"](${F});
+nw["shop"="bakery"]["name"]["wikidata"](${F});
+nw["amenity"~"^(cafe|ice_cream)$"]["name"]["outdoor_seating"="yes"](${N});
+);out center tags qt 500;`;
   const data = await overpass(q, signal);
-  const base = { view:4, falls:5, peak:4, nature:4, beach:4, park:3, water:3, garden:2, picnic:1 };
+  const base = { view:4, falls:5, peak:4, nature:4, beach:4, park:3, water:3, garden:2, picnic:1, market:4, cafe:2, icecream:2, bakery:2, eat:2 };
+  const FOODAM = ['cafe','ice_cream','restaurant','food_court','marketplace'];
   const seen = new Set(), cands = [];
   for (const el of (data.elements || [])){
     const t = el.tags || {}, lat = el.lat != null ? el.lat : el.center && el.center.lat, lon = el.lon != null ? el.lon : el.center && el.center.lon;
     if (lat == null || !t.name) continue;
     const name = t['name:en'] && !/^[\x00-\x7F]*$/.test(t.name) ? t.name + ' · ' + t['name:en'] : t.name;
     const id = name.toLowerCase(); if (seen.has(id)) continue; seen.add(id);
-    const kind = classify(t), km = distKm(o.lat, o.lon, lat, lon);
-    if (km < 0.25) continue;
-    cands.push({ el, t, kind, lat, lon, km, name, score: base[kind] + (t.wikipedia ? 2 : 0) + (t.wikidata ? 1 : 0) - km*0.12 });
+    const isFood = FOODAM.includes(t.amenity) || t.shop === 'bakery';
+    const kind = isFood ? foodKind(t) : classify(t), km = distKm(o.lat, o.lon, lat, lon);
+    if (km < 0.2 || km > 10.5) continue;
+    cands.push({ el, t, kind, lat, lon, km, name, food: isFood, score: base[kind] + (t.wikipedia ? 2 : 0) + (t.wikidata ? 1 : 0) + (t.outdoor_seating === 'yes' ? 1 : 0) - km*0.12 });
   }
   cands.sort((a, b) => b.score - a.score);
-  const per = {}, pick = [];
-  for (const c of cands){ if ((per[c.kind] = (per[c.kind] || 0) + 1) > 4) continue; pick.push(c); if (pick.length >= 14) break; }
+  const per = {}, pick = []; let nFood = 0, nOut = 0;
+  for (const c of cands){
+    if ((per[c.kind] || 0) >= 4) continue;
+    if (c.food ? nFood >= 5 : nOut >= 13) continue;
+    per[c.kind] = (per[c.kind] || 0) + 1; c.food ? nFood++ : nOut++; pick.push(c);
+  }
   if (!pick.length) return [];
+  onStep && onStep(`Found ${pick.length} spots. Checking bus, train and tram stops…`);
   const around = (a, b) => `node(around:650,${a},${b})["highway"="bus_stop"];node(around:1600,${a},${b})["railway"~"^(station|halt|tram_stop)$"];node(around:900,${a},${b})["amenity"="ferry_terminal"];`;
-  const sq = `[out:json][timeout:25];(${pick.map(c => around(c.lat, c.lon)).join('')}${around(o.lat, o.lon)});out body 3000;`;
-  let stops = [];
+  const sq = `[out:json][timeout:20];(${pick.map(c => around(c.lat, c.lon)).join('')}${around(o.lat, o.lon)});out body qt 3000;`;
+  let stops = [], stopsOk = true;
   try { const sd = await overpass(sq, signal); stops = (sd.elements || []).filter(e => e.lat != null).map(e => ({ id: e.id, lat: e.lat, lon: e.lon, mode: stopMode(e.tags || {}), name: (e.tags && (e.tags.name || (e.tags.ref ? 'Stop ' + e.tags.ref : ''))) || 'Unnamed stop' })); }
-  catch(e){ if (signal && signal.aborted) throw e; }
+  catch(e){ if (signal && signal.aborted) throw e; stopsOk = false; }
   const near = (lat, lon, maxKm, mode) => stops.map(s => ({ s, km: distKm(lat, lon, s.lat, s.lon) })).filter(x => x.km <= maxKm && (!mode || x.s.mode === mode)).sort((a, b) => (a.km + (a.s.mode === 'bus' ? 0.25 : 0)) - (b.km + (b.s.mode === 'bus' ? 0.25 : 0)));
   return pick.map(c => {
     const t = c.t, k = KIND[c.kind];
     const s = { key: 'osm-' + c.el.type[0] + c.el.id, name: c.name, kind: c.kind, lat: c.lat, lon: c.lon, src: 'osm',
-      km: c.km, brg: bearing(o.lat, o.lon, c.lat, c.lon), diff: k.diff, diffNote: 'Estimated from map data', visit: k.visit,
-      blurb: t.description ? String(t.description).slice(0, 160) : k.blurb, path: '', tips: [], dirs: [], facts: [] };
+      km: c.km, brg: bearing(o.lat, o.lon, c.lat, c.lon), diff: k.diff, diffNote: k.food ? '' : 'Estimated from map data', visit: k.visit,
+      blurb: t.description ? String(t.description).slice(0, 160) : k.food ? foodLine(t) + '. ' + k.blurb : k.blurb, path: '', tips: [], dirs: [], facts: [] };
     if (c.kind === 'peak' && t.ele) s.facts.push('Summit ' + Math.round(+t.ele) + ' m');
     if (t.wheelchair) s.facts.push('Wheelchair access: ' + t.wheelchair);
     if (t.opening_hours) s.facts.push('Opening hours: ' + t.opening_hours);
     if (t.fee) s.facts.push('Fee: ' + t.fee);
-    if (t.wheelchair === 'yes') { s.diff = 'easy'; s.diffNote = 'Mapped as wheelchair accessible'; }
+    if (t.wheelchair === 'yes' && !k.food) { s.diff = 'easy'; s.diffNote = 'Mapped as wheelchair accessible'; }
+    if (k.food) s.foodNear = [];
     if (c.km < 1.3){ s.walkOnly = true; s.total = walkMin(c.km); s.finalMin = s.total; s.finalKm = +(c.km*1.25).toFixed(1); return s; }
     const st = near(c.lat, c.lon, 1.6)[0];
-    if (!st){ s.noTransit = true; s.total = null; return s; }
+    if (!st){
+      if (!stopsOk){ s.estOnly = true; s.total = Math.round(14 + c.km*1.35/16*60); return s; }
+      s.noTransit = true; s.total = null; return s;
+    }
     const fk = st.km*1.25;
     const oSame = near(o.lat, o.lon, 2, st.s.mode)[0], oAny = near(o.lat, o.lon, 2)[0];
     const os = oSame && walkMin(oSame.km) <= 20 ? oSame : oAny;
@@ -480,30 +540,48 @@ nwr["tourism"="picnic_site"]["name"]${A};
     s.total = s.walkTo + s.ride + s.finalMin;
     s.dirs = [`From ${st.s.name}, head ${compass(bearing(st.s.lat, st.s.lon, c.lat, c.lon))} towards ${c.name}.`,
               `It's about ${Math.round(fk*1000/50)*50} m on foot, roughly ${s.finalMin} min.`,
-              `Look for the entrance and signs. The map point marks the middle of the place.`];
+              k.food ? `Check it's open before you set off.` : `Look for the entrance and signs. The map point marks the middle of the place.`];
     return s;
   });
+}
+/* Cafés, bakeries and shops within a short walk of each outdoor spot, fetched once in the background. */
+async function fetchFoodNear(){
+  const list = S.spots.filter(s => s.src === 'osm' && !KIND[s.kind].food && s.lat != null && s.foodNear === undefined).slice(0, 14);
+  if (!list.length) return;
+  const q = `[out:json][timeout:20];(${list.map(s => `nw(around:450,${s.lat},${s.lon})["amenity"~"^(cafe|ice_cream|restaurant|fast_food|pub|food_court|marketplace)$"]["name"];nw(around:450,${s.lat},${s.lon})["shop"~"^(bakery|convenience|supermarket|deli|greengrocer)$"]["name"];`).join('')});out center tags qt 800;`;
+  try {
+    const d = await overpass(q);
+    const els = (d.elements || []).map(e => ({ t: e.tags || {}, lat: e.lat != null ? e.lat : e.center && e.center.lat, lon: e.lon != null ? e.lon : e.center && e.center.lon })).filter(e => e.lat != null);
+    list.forEach(s => {
+      const near = els.map(e => ({ e, m: Math.round(distKm(s.lat, s.lon, e.lat, e.lon)*1000) })).filter(x => x.m <= 500)
+        .sort((a, b) => (a.m - (a.e.t.outdoor_seating === 'yes' ? 150 : 0) - (a.e.t.shop ? 0 : 60)) - (b.m - (b.e.t.outdoor_seating === 'yes' ? 150 : 0) - (b.e.t.shop ? 0 : 60)));
+      const seen = new Set(); s.foodNear = [];
+      for (const x of near){ const n = x.e.t.name; if (seen.has(n)) continue; seen.add(n); s.foodNear.push({ name: n, what: foodLine(x.e.t), m: x.m, hours: x.e.t.opening_hours || '' }); if (s.foodNear.length >= 5) break; }
+    });
+  } catch(e){ list.forEach(s => { s.foodNear = null; }); }
+  persistLast(); soft();
 }
 
 function aiPrompt(text, o){
   return `You help casual outdoor explorers find places they can reach by public transport.
 Starting point: "${text}"${o ? ` (coordinates ${o.lat.toFixed(4)}, ${o.lon.toFixed(4)})` : ''}.
-List 8 real, distinctive outdoor spots (parks, viewpoints, walks, picnic spots, waterside, nature reserves) that most people could reach from the starting point by public transport in under 75 minutes. Mix types and distances. Only include places you are confident exist; leave a place out rather than guess. Use the public transport a local would actually use. Name real lines or services only when you are confident; otherwise leave "lines" empty.
+List 8 real, distinctive outdoor spots (parks, viewpoints, walks, picnic spots, waterside, nature reserves) that most people could reach from the starting point by public transport in under 75 minutes, plus 2 great food spots (a café, food market, bakery, ice cream or street food place) that make a good stop on an outing. Mix types and distances. Only include places you are confident exist; leave a place out rather than guess. Use the public transport a local would actually use. Name real lines or services only when you are confident; otherwise leave "lines" empty.
 Reply with JSON only, exactly this shape:
 {"origin":{"name":string,"lat":number,"lon":number,"timezone":IANA timezone string,"country":string},
-"spots":[{"name":string,"kind":"park"|"viewpoint"|"walk"|"picnic"|"water"|"nature","lat":number,"lon":number,
+"spots":[{"name":string,"kind":"park"|"viewpoint"|"walk"|"picnic"|"water"|"nature"|"cafe"|"market"|"bakery"|"icecream"|"eat","lat":number,"lon":number,
 "blurb":string (max 140 chars),"difficulty":"easy"|"moderate"|"hilly","difficultyNote":string (max 70 chars),
 "visit":string like "1–2 h","path":string like "3 km loop" or "",
 "stop":{"name":string,"mode":"bus"|"train"|"tram"|"metro"|"ferry","lines":[string]},
 "walkToStopMin":number,"rideMin":number (including waiting and any changes),"changes":number,"finalWalkMin":number,"finalWalkKm":number,
-"directions":[up to 3 short steps from the stop to the spot],"tips":[up to 3 short practical tips]}]}`;
+"directions":[up to 3 short steps from the stop to the spot],"tips":[up to 3 short practical tips],
+"food":[up to 2 real places to eat or buy picnic food within about 500 m, name first, like "Rosie's Café, by the main gate"; empty if unsure]}]}`;
 }
 function fromAI(d, o0, text){
   const oo = (d && d.origin) || {};
   const o = o0 ? { ...o0 } : { lat: +oo.lat, lon: +oo.lon, name: String(oo.name || text).slice(0, 60), source: 'ai' };
   if (oo.timezone) o.tz = String(oo.timezone);
   if (!isFinite(o.lat) || !isFinite(o.lon)){ o.lat = 0; o.lon = 0; o.noCoords = true; }
-  const kmap = { park:'park', viewpoint:'view', walk:'walk', picnic:'picnic', water:'water', nature:'nature' };
+  const kmap = { park:'park', viewpoint:'view', walk:'walk', picnic:'picnic', water:'water', nature:'nature', cafe:'cafe', market:'market', bakery:'bakery', icecream:'icecream', eat:'eat', food:'eat', restaurant:'eat' };
   const spots = (Array.isArray(d && d.spots) ? d.spots : []).slice(0, 10).map(x => {
     if (!x || !x.name) return null;
     const kind = kmap[x.kind] || 'park', k = KIND[kind];
@@ -520,6 +598,7 @@ function fromAI(d, o0, text){
       oStop: null, walkTo: clamp(x.walkToStopMin, 0, 30, 6), ride: clamp(x.rideMin, 1, 180, 25), changes: clamp(x.changes, 0, 4, 0),
       finalMin: clamp(x.finalWalkMin, 0, 60, 10), finalKm: isFinite(+x.finalWalkKm) ? Math.max(0, +(+x.finalWalkKm).toFixed(1)) : null };
     if (s.finalKm == null) s.finalKm = +(s.finalMin*4.8/60).toFixed(1);
+    s.foodNear = (Array.isArray(x.food) ? x.food : []).slice(0, 3).map(f => ({ name: String(f).slice(0, 90), what: '', m: null, hours: '' }));
     s.total = s.walkTo + s.ride + s.finalMin;
     return s;
   }).filter(Boolean);
@@ -534,96 +613,141 @@ function demoData(){
       walkTo, ride, changes: 0, finalMin: fin, finalKm: +(fin*4.8/60).toFixed(1), total: walkTo + ride + fin,
       dirs: ['Leave the stop and follow the signs for the park entrance.', 'Keep to the main path.'] }, extra || {});
   };
-  return { origin: o, spots: [
+  const r = { origin: o, spots: [
     mk("Weavers' Park", 'park', 0.012, 0.01, 'easy', 'Weavers Gate', 'bus', ['3'], 3, 10, 3, 'A flat Victorian park with a bandstand, lawns and a duck pond.', { path: '1.2 km loop' }),
     mk('Millbrook Meadows', 'picnic', 0.05, -0.08, 'easy', 'Millbrook', 'train', [], 8, 18, 6, 'Wildflower meadows around a still pond, with picnic tables and a level boardwalk.'),
     mk('Hollin Wood loop', 'nature', -0.06, -0.05, 'moderate', 'Hollin Bridge', 'bus', ['7'], 4, 25, 9, 'An old oak wood along a stream, with a footbridge over the beck.', { path: '3.4 km loop' }),
     mk('Larkhill Viewpoint', 'view', 0.07, 0.12, 'moderate', 'Larkhill Road', 'bus', ['24'], 4, 29, 12, 'A grassy hilltop with benches and a long view west over the valley.', { path: '2.4 km loop', diffNote: 'Steady 90 m climb; uneven steps near the top' }),
     mk('Ridgeback Common', 'peak', -0.1, 0.16, 'hilly', 'Common Lane', 'train', [], 7, 37, 14, 'Open heath along a ridge, with a trig point and views in every direction.'),
-    mk('Canal Basin', 'water', -0.02, 0.03, 'easy', 'Wharf Street', 'tram', ['T1'], 5, 9, 4, 'Towpaths, narrowboats and a café by the old canal locks.')
+    mk('Canal Basin', 'water', -0.02, 0.03, 'easy', 'Wharf Street', 'tram', ['T1'], 5, 9, 4, 'Towpaths, narrowboats and a café by the old canal locks.', { foodNear: [{ name: 'Lockside Café', what: 'Café · outdoor seating', m: 80, hours: '' }] }),
+    mk('Lockside Café', 'cafe', -0.021, 0.031, 'easy', 'Wharf Street', 'tram', ['T1'], 5, 9, 5, 'Café · outdoor seating by the canal locks. Good cake.', { foodNear: [] }),
+    mk('Saturday Food Market', 'market', 0.015, -0.02, 'easy', 'Corn Exchange', 'bus', ['12'], 3, 8, 3, 'Food market · street food and picnic supplies. Runs on Saturdays.', { foodNear: [] })
   ]};
+  r.spots.forEach(x => { if (x.name === 'Larkhill Viewpoint') x.foodNear = [{ name: 'Larkhill Road Café', what: 'Café · outdoor seating', m: 120, hours: '' }, { name: 'Hill Stores', what: 'Corner shop', m: 160, hours: '' }]; if (x.name === "Weavers' Park") x.foodNear = [{ name: 'Bandstand Kiosk', what: 'Ice cream', m: 200, hours: '' }]; });
+  return r;
 }
 
 /* ---------------- actions: where am I, search ---------------- */
-function setStatus(st, msg){ S.status = st; S.msg = msg || ''; if (route().v !== 'explore') location.hash = 'explore'; else render(true); }
+function setStatus(st, msg){ S.status = st; S.msg = msg || ''; if (st === 'loading' || st === 'locating') S.scanStart = S.scanStart || Date.now(); else S.scanStart = 0; if (route().v !== 'explore') location.hash = 'explore'; else render(true); }
+function setStep(msg){ S.msg = msg; const el = document.getElementById('scan-msg'); if (el) el.textContent = msg; }
 function done(o, spots, src){
   S.ctl = null;
   spots.sort((a, b) => (a.total == null) - (b.total == null) || (a.total || 0) - (b.total || 0));
-  Object.assign(S, { origin: o, spots, src, foundAt: Date.now(), status: 'ready', msg: '' });
+  Object.assign(S, { origin: o, spots, src, foundAt: Date.now(), msg: '' });
   setTZ(o);
-  const inRange = spots.filter(s => s.total != null && s.total <= S.f.time);
+  const inRange = spots.filter(s => s.total != null && s.total <= S.f.time && !KIND[s.kind].food);
   S.sel = (inRange[0] || spots[0]).key;
-  LS.set('ts-last', { origin: o, spots, src, foundAt: S.foundAt });
+  persistLast();
+  S.status = 'ready'; S.scanStart = 0;
   if (route().v !== 'explore') location.hash = 'explore'; else render(false);
+  if (src === 'osm') fetchFoodNear();
 }
-async function getSample(){ if (!window.claude || typeof window.claude.use !== 'function') return null; try { return await window.claude.use('sample'); } catch(e){ return null; } }
+async function getSample(){ if (!IN_CLAUDE) return null; try { return await window.claude.use('sample'); } catch(e){ return null; } }
 function aiErr(e){
   const c = e && e.code;
-  if (c === 'not_granted') return "Claude wasn't allowed to help in this view. Allow it when asked, or try the demo city.";
+  if (c === 'not_granted') return "Claude wasn't allowed to help, so search can't run in the Claude app. Allow Claude when asked, use the web version, or try the demo city.";
   if (c === 'rate_limited') return 'Lots of searches right now. Try again in a minute.';
   if (c === 'invalid_json' || c === 'empty') return "Couldn't read a list of places for that search. Try a nearby town or add the country.";
   return "Couldn't reach Claude just now. Check your connection and try again.";
 }
 async function aiFind(text, o){
   const sample = await getSample();
-  if (!sample){ setStatus('error', "Search by place name needs Claude, which isn't available in this view. Open the web version to use your location, or try the demo city."); return; }
-  S.ctl = new AbortController();
-  setStatus('loading', `Asking Claude about outdoor spots near ${text}. This can take up to a minute.`);
+  if (!sample){ setStatus('error', 'Search is unavailable in this view right now. Open the web version, or try the demo city.'); return; }
+  const ctl = S.ctl = new AbortController();
+  S.scanStart = Date.now();
+  setStatus('loading', `Asking Claude about spots near ${text}…`);
   try {
-    const data = await sample.json(aiPrompt(text, o), { signal: S.ctl.signal, modelTier: 'default' });
+    const data = await sample.json(aiPrompt(text, o), { signal: ctl.signal, modelTier: 'quick', onText: ({ text: t }) => {
+      const n = ((t || '').match(/"name"\s*:/g) || []).length - 1;
+      setStep(n > 0 ? `Claude has found ${n} spot${n === 1 ? '' : 's'} near ${text} so far…` : `Claude is thinking about spots near ${text}…`);
+    } });
+    if (ctl.signal.aborted) return;
     const r = fromAI(data, o, text);
     if (!r.spots.length) throw { code: 'empty' };
     done(r.origin, r.spots, 'ai');
   } catch(e){
-    S.ctl = null;
-    if (e && e.code === 'cancelled'){ setStatus(S.spots.length ? 'ready' : 'idle'); return; }
+    if (S.ctl === ctl) S.ctl = null;
+    if ((e && e.code === 'cancelled') || ctl.signal.aborted){ return; }
     setStatus('error', aiErr(e));
   }
 }
 async function findAround(o, text){
   setTZ(o);
+  S.lastQuery = { o, text };
+  if (IN_CLAUDE) return aiFind(text || o.name, o);
   const ctl = S.ctl = new AbortController();
-  setStatus('loading', `Scanning for outdoor spots around ${o.name}…`);
-  try { const res = await osmFind(o, ctl.signal); if (ctl.signal.aborted) return; if (res.length) return done(o, res, 'osm'); }
-  catch(e){ if (ctl.signal.aborted) return; }
-  S.ctl = null;
-  return aiFind(text || o.name, o);
+  S.scanStart = S.scanStart || Date.now();
+  setStatus('loading', `Scanning OpenStreetMap for spots around ${o.name}…`);
+  const timer = setTimeout(() => { ctl.timedOut = true; ctl.abort(); }, 50000);
+  try {
+    const res = await osmFind(o, ctl.signal, setStep);
+    clearTimeout(timer);
+    if (S.ctl !== ctl) return;
+    if (res.length) return done(o, res, 'osm');
+    S.ctl = null;
+    setStatus('error', `No mapped parks, viewpoints or food spots found within 10 km of ${o.name}. Try a bigger nearby town.`);
+  } catch(e){
+    clearTimeout(timer);
+    if (S.ctl !== ctl || (ctl.signal.aborted && !ctl.timedOut)) return;
+    S.ctl = null;
+    setStatus('error', ctl.timedOut ? "OpenStreetMap is taking too long to answer. Its free servers get busy, so try again in a minute." : navigator.onLine === false ? "You're offline. Open a saved area, or reconnect and try again." : "OpenStreetMap didn't answer. Its free servers are sometimes busy, so try again in a minute.");
+  }
+}
+async function geocode(text){
+  const enc = encodeURIComponent(text);
+  const none = () => { const e = new Error('none'); e.none = true; return e; };
+  const nom = fetchJSON(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&accept-language=en&q=${enc}`, {}, 10000).then(g => {
+    if (!g || !g[0]) throw none(); const a = g[0].address || {};
+    return { lat: +g[0].lat, lon: +g[0].lon, name: g[0].name || text, area: a.city || a.town || a.state || '', cc: (a.country_code || '').toUpperCase() }; });
+  const pho = fetchJSON(`https://photon.komoot.io/api/?limit=1&lang=en&q=${enc}`, {}, 10000).then(g => {
+    const f = g && g.features && g.features[0]; if (!f) throw none(); const pr = f.properties || {};
+    return { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], name: pr.name || text, area: pr.city || pr.state || '', cc: (pr.countrycode || '').toUpperCase() }; });
+  return Promise.any([nom, pho]);
 }
 async function searchPlace(text){
   text = (text || '').trim(); if (!text) return;
-  S.sheet = null;
+  S.sheet = null; S.lastQuery = { text };
+  if (IN_CLAUDE) return aiFind(text, null);
+  S.scanStart = Date.now();
   setStatus('loading', `Looking up ${text}…`);
-  let g;
-  try { g = await fetchJSON(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&accept-language=en&q=${encodeURIComponent(text)}`, {}, 10000); }
-  catch(e){ return aiFind(text, null); }
-  if (!g || !g[0]){ setStatus('error', `Couldn't find “${text}”. Try a bigger nearby town, or add the country.`); return; }
-  const a = g[0].address || {};
-  findAround({ lat: +g[0].lat, lon: +g[0].lon, name: g[0].name || text, area: a.city || a.town || a.state || '', cc: (a.country_code || '').toUpperCase(), source: 'search' }, text);
+  let o;
+  try { o = await geocode(text); }
+  catch(e){
+    const errs = (e && e.errors) || [e];
+    setStatus('error', errs.every(x => x && x.none) ? `Couldn't find “${text}”. Try a bigger nearby town, or add the country.` : "Couldn't reach the place search. Check your connection and try again.");
+    return;
+  }
+  o.source = 'search';
+  findAround(o, text);
 }
 function useLocation(){
   S.sheet = null;
-  if (!navigator.geolocation) return locFail();
+  if (IN_CLAUDE || !navigator.geolocation) return locFail(0);
+  S.scanStart = Date.now();
   setStatus('locating', 'Finding where you are…');
   let settled = false;
-  const guard = setTimeout(() => { if (!settled){ settled = true; locFail(); } }, 15000);
+  const guard = setTimeout(() => { if (!settled){ settled = true; locFail(3); } }, 45000);
   try {
     navigator.geolocation.getCurrentPosition(async p => {
       if (settled) return; settled = true; clearTimeout(guard);
       const o = { lat: p.coords.latitude, lon: p.coords.longitude, name: 'Your location', source: 'gps' };
+      setStep('Got your location. Finding the area name…');
       try {
-        const g = await fetchJSON(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=15&accept-language=en&lat=${o.lat}&lon=${o.lon}`, {}, 8000);
+        const g = await fetchJSON(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=15&accept-language=en&lat=${o.lat}&lon=${o.lon}`, {}, 6000);
         const a = g.address || {};
         o.name = a.suburb || a.neighbourhood || a.quarter || a.village || a.town || a.city_district || a.city || g.name || o.name;
         o.area = a.city || a.town || a.county || ''; o.cc = (a.country_code || '').toUpperCase();
       } catch(e){}
       findAround(o, null);
-    }, () => { if (settled) return; settled = true; clearTimeout(guard); locFail(); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
-  } catch(e){ settled = true; clearTimeout(guard); locFail(); }
+    }, err => { if (settled) return; settled = true; clearTimeout(guard); locFail(err && err.code); }, { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 });
+  } catch(e){ settled = true; clearTimeout(guard); locFail(0); }
 }
-function locFail(){
-  S.status = S.spots.length ? 'ready' : 'idle';
+function locFail(code){
+  S.status = S.spots.length ? 'ready' : 'idle'; S.scanStart = 0;
   S.sheet = 'where';
-  S.whereMsg = "Your location isn't available here. Type your town, neighbourhood or station instead.";
+  S.whereMsg = IN_CLAUDE ? "The Claude app can't share your location with this page. Type your town, or open the web version to use GPS."
+    : code === 1 ? "Location permission is turned off for this page. Allow it in your browser settings, or type where you are."
+    : "Couldn't get your location. Type your town, neighbourhood or station instead.";
   render(true);
 }
 
@@ -667,6 +791,13 @@ function art(s, cls){
     }
     if (k === 'picnic' || k === 'view') { const x = 60 + r()*20; g += `<path d="M${x} 62h10M${x + 1} 62v4M${x + 9} 62v4M${x - 1} 59.5h12" stroke="${p.trunk}" stroke-width="1.2" stroke-linecap="round"/>`; }
   }
+  if (KIND[k] && KIND[k].food){
+    const cols = ['#C8553D','#E9B44C','#3D6E8F','#2E5B3B'], c = cols[Math.floor(r()*cols.length)], night = ph === 'night';
+    g += `<rect x="28" y="30" width="44" height="32" rx="1.5" fill="${night ? '#3B3F4A' : '#F3E6CF'}"/>`;
+    for (let i = 0; i < 6; i++) g += `<path d="M${(28 + i*7.33).toFixed(2)} 30h7.33l-1 6h-5.33z" fill="${i % 2 ? '#FFFFFF' : c}"/>`;
+    g += `<rect x="33" y="40" width="14" height="10" rx="1" fill="${night ? '#F6D58E' : '#9CC4D8'}"/><rect x="53" y="40" width="12" height="22" rx="1" fill="${night ? '#F6D58E' : '#6B4F3A'}"/>`;
+    g += `<path d="M80 62v-12" stroke="${p.trunk}" stroke-width="1"/><path d="M73 50h14l-7-5z" fill="${c}"/><path d="M76 62v-4h8v4" stroke="${p.trunk}" stroke-width="1" fill="none"/>`;
+  }
   return `<svg class="${cls || ''}" viewBox="0 0 100 70" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustration of ${esc(KIND[s.kind].label.toLowerCase())} at ${ph === 'night' ? 'night' : ph === 'golden' ? 'golden hour' : 'daytime'}">${g}</svg>`;
 }
 
@@ -706,7 +837,6 @@ function filtered(){
   const f = S.f;
   return S.spots.filter(s => (f.time >= 999 || (s.total != null && s.total <= f.time)) && (f.act === 'all' || KIND[s.kind].acts.includes(f.act)) && f.diff[s.diff]);
 }
-const ACTS = [['all','Anything'],['walk','Walks'],['park','Parks'],['view','Viewpoints'],['picnic','Picnic spots'],['water','Waterside']];
 
 /* ---------------- views ---------------- */
 function header(){
@@ -716,6 +846,7 @@ function header(){
       <button type="button" class="locpill" data-a="where" aria-label="Change starting point${o ? ', now ' + esc(o.name) : ''}">${ic('pin',15)}<span>${o ? esc(o.name) : 'Set location'}</span>${ic('down',14)}</button></div>
     <form class="search" id="searchForm" role="search">${ic('search',18,2)}<label for="q" class="sr">Search a town, area or station</label>
       <input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="Search a town, area or station…"><button type="submit">Go</button></form>
+    ${navigator.onLine === false ? `<div class="note warn" role="status">${ic('offline',18)}<span>You're offline. Saved areas still work. New searches and live times need a connection.</span></div>` : ''}
   </header>`;
 }
 function welcome(){
@@ -723,10 +854,21 @@ function welcome(){
     <div class="radarwrap"><div class="radar" aria-hidden="true">${radarSvg(60, null)}<div class="sweep"></div><div class="you"></div></div></div>
     <h1 style="font-family:var(--display);font-size:26px;line-height:1.1;color:var(--forest-deep)">Find a little outdoor adventure, then know how to get there.</h1>
     <p style="color:var(--ink-2)">Trail Signals finds parks, viewpoints, walks and picnic spots you can reach by bus, train, tram or ferry, anywhere in the world.</p>
-    <button type="button" class="btn" data-a="locate">${ic('locate',20,2)}Use my location</button>
+    ${locButton()}
     <button type="button" class="btn ghost" data-a="where">${ic('search',18,2)}Type where I am</button>
     <button type="button" class="chip" data-a="demo" style="align-self:center">Or explore a demo city</button>
+    ${savedAreasList()}
   </section>`;
+}
+function locButton(){
+  return IN_CLAUDE ? `<a class="btn" href="${WEB_URL}" target="_blank" rel="noopener">${ic('locate',20,2)}Use my location (web version)</a>`
+    : `<button type="button" class="btn" data-a="locate">${ic('locate',20,2)}Use my location</button>`;
+}
+function savedAreasList(){
+  if (!S.areas.length) return '';
+  return `<div class="stack" style="gap:8px"><span class="label">${ic('download',13)} Saved areas · work offline</span>${S.areas.map(a => `<div class="card row" style="padding:4px 4px 4px 14px;gap:8px">
+    <button type="button" data-a="area" data-v="${a.id}" style="flex:1;min-height:44px;border:0;background:none;text-align:left;cursor:pointer;color:var(--ink)"><b>${esc(a.origin.name)}</b> <span class="muted" style="font-size:13px">· ${a.spots.length} spots · saved ${ago(a.savedAt)}</span></button>
+    <button type="button" class="iconbtn" data-a="rmarea" data-v="${a.id}" aria-label="Delete saved area ${esc(a.origin.name)}" style="border:0">${ic('trash',17)}</button></div>`).join('')}</div>`;
 }
 function radarSvg(max, su){
   const c = 170, R = 150; const step = max <= 30 ? 10 : max <= 60 ? 15 : 30;
@@ -757,7 +899,7 @@ function selCard(s){
       <span class="row" style="gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600"><span class="pill good">${bars(DIFF[s.diff].n)}${DIFF[s.diff].label}</span>${s.km != null ? `<span>${s.km.toFixed(1)} km</span>` : ''}<span class="muted">· ${esc(s.visit)}</span></span></span></a>
       <button type="button" class="iconbtn" data-a="save" data-v="${s.key}" aria-pressed="${sv}" aria-label="${sv ? 'Remove from saved' : 'Save ' + esc(s.name)}" style="border:0;margin:8px 8px 0 0;color:${sv ? '#C2462F' : 'var(--ink)'}">${ic('heart',22,2,sv ? 'currentColor' : 'none')}</button></div>
     <div class="selfoot">
-      <div>${s.stop ? `<span style="color:var(--${s.stop.mode === 'metro' ? 'train' : s.stop.mode})">${ic(MODE[s.stop.mode].icon,26,2)}</span>` : ic('walk',26,2)}<span><b>${s.total != null ? '≈ ' + dur(s.total) : 'No stop nearby'}</b>${s.stop ? 'by ' + esc(MODE[s.stop.mode].label.toLowerCase()) : s.walkOnly ? 'on foot' : 'hard by transit'}</span></div>
+      <div>${s.stop ? `<span style="color:var(--${s.stop.mode === 'metro' ? 'train' : s.stop.mode})">${ic(MODE[s.stop.mode].icon,26,2)}</span>` : ic('walk',26,2)}<span><b>${s.total != null ? '≈ ' + dur(s.total) : 'No stop nearby'}</b>${s.stop ? 'by ' + esc(MODE[s.stop.mode].label.toLowerCase()) : s.walkOnly ? 'on foot' : s.estOnly ? 'rough estimate' : 'hard by transit'}</span></div>
       <div>${ic('walk',24,2)}<span><b>${s.finalMin != null ? s.finalMin + ' min' : '–'}</b>walk ${s.walkOnly ? 'from you' : 'from the stop'}</span></div>
     </div></article>`;
 }
@@ -767,7 +909,7 @@ function rowCard(s){
   return `<a class="card rowcard" href="#spot-${s.key}"><span class="thumb">${art(s)}</span>
     <span class="stack" style="flex:1;min-width:0;gap:4px"><b style="line-height:1.2">${esc(s.name)}</b>
       <span style="font-size:13px;color:var(--muted)">${KIND[s.kind].label} · ${DIFF[s.diff].label}${s.brg != null ? ' · ' + compass(s.brg) : ''}</span>
-      <span class="row" style="gap:6px;flex-wrap:wrap">${s.stop ? modeBadge(s.stop.mode, lineTxt(s)) : `<span class="mode walk">${ic('walk',14)}Walk</span>`}${sig}</span></span>
+      <span class="row" style="gap:6px;flex-wrap:wrap">${s.stop ? modeBadge(s.stop.mode, lineTxt(s)) : s.estOnly ? '<span class="mode walk">Stops unknown</span>' : s.walkOnly ? `<span class="mode walk">${ic('walk',14)}Walk</span>` : '<span class="mode walk">No stop nearby</span>'}${sig}</span></span>
     <span style="text-align:right;flex-shrink:0"><span class="num" style="display:block;font-size:20px;color:var(--forest-deep);line-height:1">${s.total != null ? s.total : '–'}</span><span style="font-size:11px;font-weight:600;color:var(--muted)">min</span></span></a>`;
 }
 function exploreView(){
@@ -775,11 +917,14 @@ function exploreView(){
   if (S.status === 'loading' || S.status === 'locating'){
     b += `<section class="pad stack" style="gap:14px;padding-block:6px 24px" aria-live="polite">
       <div class="radarwrap"><div class="radar" aria-hidden="true">${radarSvg(60, null)}<div class="sweep"></div><div class="you"></div></div></div>
-      <p style="text-align:center;font-weight:600">${esc(S.msg)}</p>
-      ${S.ctl ? '<button type="button" class="chip" data-a="cancel" style="align-self:center">Cancel</button>' : ''}</section>`;
+      <p id="scan-msg" style="text-align:center;font-weight:600">${esc(S.msg)}</p>
+      <p id="scan-time" class="est" style="text-align:center">${S.scanStart ? Math.round((Date.now() - S.scanStart)/1000) + ' s' : ''}</p>
+      ${IN_CLAUDE ? '<p class="est" style="text-align:center">If Claude asks for permission, tap Allow.</p>' : ''}
+      <div id="scan-slow" class="stack" style="gap:8px;align-items:center" hidden><span style="font-size:14px;color:var(--muted);text-align:center">This is taking longer than usual.</span><button type="button" class="chip" data-a="demo">Try the demo city instead</button></div>
+      <button type="button" class="chip" data-a="cancel" style="align-self:center">Cancel</button></section>`;
     return { body: b };
   }
-  if (S.status === 'error') b += `<div class="pad" style="padding-bottom:12px"><div class="note warn" role="alert">${ic('alert',18)}<span class="stack" style="gap:8px"><span>${esc(S.msg)}</span><span class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="chip" data-a="where">Try another place</button><button type="button" class="chip" data-a="demo">Demo city</button></span></span></div></div>`;
+  if (S.status === 'error') b += `<div class="pad" style="padding-bottom:12px"><div class="note warn" role="alert">${ic('alert',18)}<span class="stack" style="gap:8px"><span>${esc(S.msg)}</span><span class="row" style="gap:8px;flex-wrap:wrap">${S.lastQuery ? '<button type="button" class="chip" data-a="retry">Try again</button>' : ''}<button type="button" class="chip" data-a="where">Another place</button><button type="button" class="chip" data-a="demo">Demo city</button></span></span></div></div>`;
   if (!S.spots.length){ b += welcome(); return { body: b }; }
   const list = filtered(), sel = list.find(s => s.key === S.sel) || list[0];
   const beyond = S.spots.length - list.length;
@@ -788,12 +933,12 @@ function exploreView(){
     <div class="scroll-x" role="group" aria-label="Filters">
       <button type="button" class="chip soft" data-a="filters">${ic('clock',16)}${f.time >= 999 ? 'Any time' : 'Under ' + f.time + ' min'}</button>
       <button type="button" class="chip soft" data-a="filters">${ic('walk',16)}${effort.length === 3 ? 'Any effort' : effort.map(k => DIFF[k].label).join(' + ') || 'No effort set'}</button>
-      <button type="button" class="chip soft" data-a="filters">${ic('leaf',16)}${ACTS.find(a => a[0] === f.act)[1]}</button>
+      <button type="button" class="chip soft" data-a="filters">${ic(f.act === 'food' ? 'food' : 'leaf',16)}${actLabel(f.act)}</button>
       <button type="button" class="chip" data-a="filters" aria-label="All filters">${ic('sliders',18)}</button></div></div>
   <div class="pad stack" style="gap:12px">${radar(list)}${sel ? selCard(sel) : ''}</div>
   <section class="pad stack" style="gap:10px;padding-block:18px 24px" aria-labelledby="more-h">
     <div class="row" style="justify-content:space-between;align-items:baseline;gap:8px"><h2 id="more-h" style="font-size:17px">${list.length ? list.length + (list.length === 1 ? ' spot' : ' spots') + (f.time >= 999 ? '' : ' within ' + f.time + ' min') : 'Nothing matches'}</h2>
-      <button type="button" class="chip" data-a="refresh" style="height:36px;font-size:13px">${ic('swap',14)}Refresh</button></div>
+      <span class="row" style="gap:6px">${S.src !== 'demo' ? `<button type="button" class="chip" data-a="saveoffline" style="height:36px;font-size:13px" aria-pressed="${S.areas.some(a => a.id === areaId())}">${ic('download',14)}${S.areas.some(a => a.id === areaId()) ? 'Saved offline' : 'Save offline'}</button>` : ''}<button type="button" class="chip" data-a="refresh" style="height:36px;font-size:13px">${ic('swap',14)}Refresh</button></span></div>
     ${list.map(rowCard).join('') || `<div class="empty"><b>Nothing quite fits yet</b><span class="muted" style="font-size:14px">Try a longer travel time or another activity.</span><button type="button" class="chip" data-a="reset">Reset filters</button></div>`}
     ${beyond > 0 && list.length ? `<button type="button" class="chip" data-a="any" style="align-self:center">Show ${beyond} more beyond your filters</button>` : ''}
     <p style="font-size:12px;color:var(--muted);margin-top:6px">${srcNote()} Found ${ago(S.foundAt)}.</p>
@@ -827,7 +972,7 @@ function spotView(s){
       <p style="color:var(--ink-2)">${esc(s.blurb)}</p>
       <div class="stats"><span class="pill good" style="font-size:14px;padding:6px 11px">${bars(DIFF[s.diff].n)}${DIFF[s.diff].label}</span>
         ${s.km != null ? `<span>${ic('pin',18)}${s.km.toFixed(1)} km ${s.brg != null ? compass(s.brg) : ''}</span>` : ''}<span>${ic('clock',18)}${esc(s.visit)}</span></div>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill plain">${KIND[s.kind].label}</span>${s.path ? `<span class="pill plain">${esc(s.path)}</span>` : ''}${KIND[s.kind].acts.filter(a => a !== s.kind).map(a => `<span class="pill plain">${(ACTS.find(x => x[0] === a) || ['', a])[1]}</span>`).join('')}${spotSrcPill(s)}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><span class="pill plain">${KIND[s.kind].label}</span>${s.path ? `<span class="pill plain">${esc(s.path)}</span>` : ''}${KIND[s.kind].acts.filter(a => a !== s.kind && ACTS.some(x => x[0] === a)).map(a => `<span class="pill plain">${actLabel(a)}</span>`).join('')}${spotSrcPill(s)}</div>
       ${s.diffNote ? `<p style="font-size:13px;color:var(--muted)">${esc(s.diffNote)}</p>` : ''}
     </section>
     ${top ? `<a class="banner ${catOf(top.cat)[2] === 'warn' ? '' : 'good'}" href="#ups">${ic(catOf(top.cat)[2] === 'warn' ? 'alert' : 'chat',20)}<span style="flex:1"><b>${esc(top.text || catOf(top.cat)[1])}</b><br><span style="font-size:12.5px">Visitor report · seen ${ago(top.seenAt)}</span></span>${ic('next',18)}</a>` : ''}
@@ -838,12 +983,14 @@ function spotView(s){
         ${s.stop ? `<a class="transrow" href="#trip-${s.key}"><span class="ricon" style="background:var(--${s.stop.mode === 'metro' ? 'train' : s.stop.mode})">${ic(MODE[s.stop.mode].icon,22,2)}</span>
           <span class="stack" style="flex:1;min-width:0"><b>${esc(lineTxt(s))} to ${esc(s.stop.name)}</b><span style="font-size:13px;color:var(--muted)">≈ ${dur(s.total)} door to door${s.changes ? ' · ' + s.changes + ' change' : ''} · then ${s.finalMin} min walk</span></span>${ic('next',18)}</a>`
         : s.walkOnly ? `<a class="transrow" href="#trip-${s.key}"><span class="ricon" style="background:var(--forest)">${ic('walk',22,2)}</span><span class="stack" style="flex:1"><b>Walk there</b><span style="font-size:13px;color:var(--muted)">≈ ${s.total} min on foot</span></span>${ic('next',18)}</a>`
+        : s.estOnly ? `<div class="transrow"><span class="ricon" style="background:var(--faint)">${ic('clock',22,2)}</span><span class="stack"><b>Roughly ${dur(s.total)} by public transport</b><span style="font-size:13px;color:var(--muted)">Stop details didn't load. Use live times below.</span></span></div>`
         : `<div class="transrow"><span class="ricon" style="background:var(--faint)">${ic('alert',22,2)}</span><span class="stack"><b>No stop mapped within 1.5 km</b><span style="font-size:13px;color:var(--muted)">Check a journey planner for options</span></span></div>`}
         ${L ? `<a class="transrow" href="${L.g}" target="_blank" rel="noopener"><span class="ricon" style="background:var(--sky)">${ic('clock',22,2)}</span><span class="stack" style="flex:1"><b>Live times and route</b><span style="font-size:13px;color:var(--muted)">Opens Google Maps transit directions</span></span>${ic('ext',18)}</a>
                <a class="transrow" href="${L.m}" target="_blank" rel="noopener"><span class="ricon" style="background:var(--forest)">${ic('map',22,2)}</span><span class="stack" style="flex:1"><b>See it on the map</b><span style="font-size:13px;color:var(--muted)">Opens OpenStreetMap</span></span>${ic('ext',18)}</a>` : ''}
       </div>
       ${lines === 'loading' ? '<p class="est">Checking which lines stop here…</p>' : Array.isArray(lines) && lines.length ? `<p style="font-size:13px;color:var(--ink-2)"><b>Lines at ${esc(s.stop.name)}:</b> ${lines.map(esc).join(', ')} <span class="muted">(from OpenStreetMap)</span></p>` : ''}
     </section>
+    ${foodSection(s)}
     <section id="ups" class="stack" style="gap:10px" aria-labelledby="up-h">
       <div class="row" style="justify-content:space-between;align-items:baseline"><h2 id="up-h" style="font-size:19px">Recent visitor updates</h2><a href="#update-${s.key}" style="font-weight:700;font-size:14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none">+ Add yours</a></div>
       <p style="font-size:13px;color:var(--muted)">Shared by people who visited. They're not live or verified, and conditions may have changed since.</p>
@@ -853,10 +1000,23 @@ function spotView(s){
       <ul style="margin:0;padding-left:20px;color:var(--ink-2);line-height:1.6">${[...s.facts, ...s.tips].map(t => `<li>${esc(t)}</li>`).join('')}</ul>
       ${more && more.about ? `<div class="card stack" style="padding:14px;gap:8px"><span class="pill info" style="align-self:flex-start">${ic('spark',13)}From Claude · may be inaccurate</span><p>${esc(more.about)}</p>${(more.tips || []).length ? `<ul style="margin:0;padding-left:20px;line-height:1.6">${more.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>` : ''}
       ${more && more.err ? `<p class="est">${esc(more.err)}</p>` : ''}</section>` : ''}
-    ${s.src === 'osm' && !more ? `<button type="button" class="chip" data-a="more" data-v="${s.key}" style="align-self:flex-start">${ic('spark',16)}Ask Claude about this place</button>` : more === null ? '<p class="est">Asking Claude…</p>' : ''}
+    ${IN_CLAUDE && s.src !== 'demo' && !more ? `<button type="button" class="chip" data-a="more" data-v="${s.key}" style="align-self:flex-start">${ic('spark',16)}Ask Claude about this place</button>` : more === null ? '<p class="est">Asking Claude…</p>' : ''}
   </div>`;
   return { body, action: `<div class="actionbar pad"><a class="btn ghost" href="#update-${s.key}" style="padding:0 14px">${ic('chat',18)}Update</a>
     <a class="btn" href="#trip-${s.key}" style="flex:1">Plan trip ${ic('next',18,2.4)}</a></div>` };
+}
+function foodSection(s){
+  if (KIND[s.kind].food) return '';
+  const fn = s.foodNear;
+  let inner;
+  if (Array.isArray(fn) && fn.length){
+    inner = `<div class="card" style="overflow:hidden">${fn.map(f => `<div class="transrow"><span class="ricon" style="background:#B5532A">${ic(/café|cafe/i.test(f.what || f.name) ? 'cafe' : /ice cream/i.test(f.what) ? 'icecream' : /shop|market|bakery|deli|grocer/i.test(f.what) ? 'basket' : 'food',20,2)}</span>
+      <span class="stack" style="flex:1;min-width:0"><b>${esc(f.name)}</b>${f.what || f.m != null ? `<span style="font-size:13px;color:var(--muted)">${esc(f.what)}${f.m != null ? (f.what ? ' · ' : '') + f.m + ' m away' : ''}</span>` : ''}${f.hours ? `<span class="est">Hours: ${esc(f.hours)}</span>` : ''}</span></div>`).join('')}</div>
+      <p class="est">${s.src === 'ai' ? "Suggested by Claude. Check it's open before you rely on it." : s.src === 'osm' ? 'From OpenStreetMap. Hours change, so check before you rely on it.' : 'Demo places.'}</p>`;
+  } else if (fn === undefined && s.src === 'osm') inner = '<p class="est">Looking for cafés and shops nearby…</p>';
+  else if (fn === null) inner = `<p style="font-size:14px;color:var(--muted)">Couldn't check for food nearby just now. Bring snacks and water to be safe.</p>`;
+  else inner = `<p style="font-size:14px;color:var(--muted)">No cafés or shops found within 500 m. Bring a picnic and water.</p>`;
+  return `<section class="stack" style="gap:10px" aria-labelledby="food-h"><h2 id="food-h" style="font-size:19px">Food nearby</h2>${inner}</section>`;
 }
 function updateCard(u){
   const c = catOf(u.cat), v = Store.myVotes[u.id], n = voteCount(u.id), old = Date.now() - u.seenAt > 3*86400e3;
@@ -927,7 +1087,7 @@ function tripView(s){
   if (!s.stop && !s.walkOnly){
     const L0 = transitLinks(s);
     return { body: `<header class="pad row" style="gap:10px;padding-block:14px;background:var(--surface);border-bottom:1.5px solid var(--line)"><a class="iconbtn" href="#spot-${s.key}" aria-label="Back">${ic('back',22)}</a><h1 style="font-family:var(--display);font-size:23px;color:var(--forest-deep)">Plan your trip</h1></header>
-      <div class="pad stack" style="gap:14px;padding-block:18px"><div class="note warn">${ic('alert',18)}<span>No bus, train, tram or ferry stop is mapped within 1.5 km of ${esc(s.name)}, so Trail Signals can't plan this one.</span></div>
+      <div class="pad stack" style="gap:14px;padding-block:18px"><div class="note warn">${ic('alert',18)}<span>${s.estOnly ? `Stop details didn't load for ${esc(s.name)}, so there's only a rough estimate of about ${dur(s.total)}. Refresh the area to try again.` : `No bus, train, tram or ferry stop is mapped within 1.5 km of ${esc(s.name)}, so Trail Signals can't plan this one.`}</span></div>
       ${L0 ? `<a class="btn" href="${L0.g}" target="_blank" rel="noopener">${ic('ext',18)}Try Google Maps transit directions</a>` : ''}</div>` };
   }
   const p = plan(s), L = transitLinks(s), T = S.trip;
@@ -1044,11 +1204,12 @@ function sheet(){
     const ex = ['Edinburgh','Kyoto','Vancouver','Cape Town','São Paulo','Berlin','Melbourne','Mexico City'];
     c = `<h2 id="sheet-h" style="font-size:20px">Where are you starting from?</h2>
       ${S.whereMsg ? `<div class="note warn">${ic('info',18)}<span>${esc(S.whereMsg)}</span></div>` : ''}
-      <button type="button" class="btn" data-a="locate">${ic('locate',20,2)}Use my location</button>
+      ${locButton()}
       <form id="whereForm" class="search">${ic('search',18,2)}<label for="wq" class="sr">Town, neighbourhood or station</label><input id="wq" type="search" enterkeyhint="search" autocomplete="off" placeholder="Town, neighbourhood or station"><button type="submit">Go</button></form>
       <div class="stack" style="gap:8px"><span class="label">Or try somewhere</span><div class="row" style="gap:8px;flex-wrap:wrap">${ex.map(x => `<button type="button" class="chip" data-a="place" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>
       <button type="button" class="chip" data-a="demo" style="align-self:flex-start">Explore the demo city</button>
-      <p style="font-size:12px;color:var(--muted)">With location: places and stops come from OpenStreetMap. Where live map data can't load, Claude suggests spots instead, clearly labelled.</p>`;
+      ${savedAreasList()}
+      <p style="font-size:12px;color:var(--muted)">${IN_CLAUDE ? `In the Claude app, search uses Claude, because this view can't reach outside map services. For GPS and live OpenStreetMap data, use the <a href="${WEB_URL}" target="_blank" rel="noopener">web version</a>.` : 'Places, food spots and stops come from OpenStreetMap. Save an area to use it offline.'}</p>`;
   }
   return `<div class="scrim" data-a="close"></div><div class="sheet pad stack" role="dialog" aria-modal="true" aria-labelledby="sheet-h" style="gap:16px"><div class="grab" aria-hidden="true"></div>${c}</div>`;
 }
@@ -1120,8 +1281,17 @@ document.addEventListener('click', e => {
     case 'locate': useLocation(); return;
     case 'place': searchPlace(v); return;
     case 'demo': { S.sheet = null; const d = demoData(); done(d.origin, d.spots, 'demo'); toast('Demo city: places are made up'); return; }
-    case 'cancel': if (S.ctl) S.ctl.abort(); S.ctl = null; S.status = S.spots.length ? 'ready' : 'idle'; break;
-    case 'refresh': { const o = S.origin; if (!o) break; if (S.src === 'demo'){ toast('Demo city refreshed'); break; } if (o.source === 'ai' || S.src === 'ai') aiFind(o.name, o.noCoords ? null : o); else findAround(o, o.name); return; }
+    case 'cancel': { const c = S.ctl; S.ctl = null; if (c) c.abort(); S.status = S.spots.length ? 'ready' : 'idle'; S.scanStart = 0; break; }
+    case 'retry': { const q = S.lastQuery; if (!q) break; if (q.o) findAround(q.o, q.text); else searchPlace(q.text); return; }
+    case 'saveoffline': {
+      const id = areaId(); if (!id) break;
+      if (S.areas.some(a => a.id === id)){ S.areas = S.areas.filter(a => a.id !== id); toast('Removed from offline areas'); }
+      else { S.areas.unshift({ id, origin: S.origin, spots: S.spots, src: S.src, savedAt: Date.now() }); S.areas = S.areas.slice(0, 6); toast('Saved. This area now works offline'); }
+      LS.set('ts-areas', S.areas); break;
+    }
+    case 'area': { const a = S.areas.find(x => x.id === v); if (!a) break; S.sheet = null; done(a.origin, a.spots, a.src); S.foundAt = a.savedAt; render(true); return; }
+    case 'rmarea': S.areas = S.areas.filter(x => x.id !== v); LS.set('ts-areas', S.areas); toast('Saved area deleted'); break;
+    case 'refresh': { const o = S.origin; if (!o) break; if (S.src === 'demo'){ toast('Demo city refreshed'); break; } if (S.src === 'ai') aiFind(o.name, o.noCoords ? null : o); else { S.spots.forEach(x => { delete x.foodNear; }); findAround(o, o.name); } return; }
     case 'time': S.f.time = +v; saveF(); break;
     case 'act': S.f.act = v; saveF(); break;
     case 'diff': S.f.diff[v] = !S.f.diff[v]; saveF(); break;
@@ -1209,6 +1379,15 @@ window.addEventListener('hashchange', () => {
 });
 document.addEventListener('click', e => { const a = e.target.closest('a[href="#ups"]'); if (a){ e.preventDefault(); const el = document.getElementById('ups'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } });
 
+setInterval(() => {
+  if (!S.scanStart || (S.status !== 'loading' && S.status !== 'locating')) return;
+  const sec = Math.round((Date.now() - S.scanStart)/1000), t = document.getElementById('scan-time'), slow = document.getElementById('scan-slow');
+  if (t) t.textContent = sec + ' s';
+  if (slow && sec >= 25) slow.hidden = false;
+}, 1000);
+window.addEventListener('online', () => render(true));
+window.addEventListener('offline', () => render(true));
+if (!IN_CLAUDE && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 render(false);
 initDb();
 setInterval(() => { if (route().v === 'explore' && !S.sheet && !(document.activeElement && document.activeElement.tagName === 'INPUT')) render(true); }, 60000);

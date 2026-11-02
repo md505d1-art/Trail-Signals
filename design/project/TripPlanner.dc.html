@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trail Signals · Trip planner</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2C6E95}a:hover{color:#1F5677}
+.seg{flex:1;height:44px;border:0;border-radius:12px;background:transparent;color:#3B4740;font:700 15px Figtree,system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.seg[aria-pressed="true"]{background:#FFFDF8;color:#1F4029;box-shadow:0 1px 3px rgba(29,38,32,0.18)}
+.route{flex:1;min-height:64px;border-radius:14px;border:1.5px solid #D4CBB3;background:#FFFDF8;padding:8px 12px;text-align:left;cursor:pointer;font:inherit;color:#1D2620;display:flex;flex-direction:column;gap:2px}
+.route[aria-pressed="true"]{border:2px solid #2E5B3B;padding:7.5px 11.5px;background:#F4F8F1}
+.dep{width:100%;text-align:left;border-radius:14px;border:1.5px solid #E4DCC8;background:#FFFDF8;padding:12px 14px;cursor:pointer;font:inherit;color:#1D2620;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dep[aria-pressed="true"]{border:2px solid #2E5B3B;padding:11.5px 13.5px;background:#F4F8F1}
+.toggle{width:52px;height:32px;border-radius:999px;border:0;background:#C9BFA5;position:relative;cursor:pointer;flex-shrink:0}
+.toggle[aria-pressed="true"]{background:#2E5B3B}
+.knob{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#FFFFFF;transition:left .15s}
+.toggle[aria-pressed="true"] .knob{left:24px}
+.seg:focus-visible,.route:focus-visible,.dep:focus-visible,.toggle:focus-visible,.btn:focus-visible{outline:3px solid #2C6E95;outline-offset:2px}
+.btn{text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 1900px; box-sizing: border-box; background: #F8F3E6; color: #1D2620; font-family: Figtree, system-ui, sans-serif; position: relative; overflow: hidden">
+
+  <header style="padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 14px; background: #FFFDF8; border-bottom: 1.5px solid #E4DCC8">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PlaceDetails.dc.html" class="btn" aria-label="Back to Larkhill Viewpoint" style="width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #E4DCC8; color: #1D2620; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+      <div style="min-width: 0">
+        <div style="font-size: 13px; font-weight: 600; color: #55625A">Trip plan · Saturday</div>
+        <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-size: 23px; line-height: 1.15; color: #1F4029">Larkhill Viewpoint</h1>
+      </div>
+    </div>
+    <div style="display: flex; gap: 4px; background: #EDE6D3; border-radius: 14px; padding: 4px" role="group" aria-label="Trip direction">
+      <button type="button" class="seg" aria-pressed="{{isOut}}" onClick="{{goOut}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Getting there</button>
+      <button type="button" class="seg" aria-pressed="{{isRet}}" onClick="{{goRet}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Getting back</button>
+    </div>
+  </header>
+
+  <div style="padding: 16px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+
+    <sc-if value="{{isOut}}" hint-placeholder-val="{{ true }}">
+      <section aria-label="Route choice" style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 14px">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 3px" aria-hidden="true">
+            <span style="width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid #2C6E95; box-sizing: border-box"></span>
+            <span style="width: 2px; height: 16px; background: #C9BFA5"></span>
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: #2E5B3B"></span>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+            <div><span style="color: #55625A">From</span> <strong>Canal Street</strong> <span style="color: #55625A">(your location)</span></div>
+            <div><span style="color: #55625A">To</span> <strong>Larkhill Viewpoint</strong> <span style="color: #55625A">· top bench</span></div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <sc-for list="{{routes}}" as="r" hint-placeholder-count="2">
+            <button type="button" class="route" aria-pressed="{{r.on}}" onClick="{{r.pick}}">
+              <span style="font-size: 12px; font-weight: 700; color: #55625A">{{r.label}}</span>
+              <span style="font-size: 17px; font-weight: 700">{{r.total}}</span>
+              <span style="font-size: 12px; color: #3B4740">{{r.changes}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{isRet}}" hint-placeholder-val="{{ false }}">
+      <section aria-labelledby="back-h" style="display: flex; flex-direction: column; gap: 10px">
+        <h2 id="back-h" style="margin: 0; font-size: 18px; font-weight: 700">When do you want to head home?</h2>
+        <div role="note" style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #FBECC8; color: #5C3B00; font-size: 13px; line-height: 1.45">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6v3M5 11l2 1.5M19 11l-2 1.5"/></svg>
+          <span><strong>Sunset 16:38, dark by about 17:10.</strong> The path down is unlit — aim to leave the top while it's still light.</span>
+        </div>
+        <sc-for list="{{returns}}" as="d" hint-placeholder-count="3">
+          <button type="button" class="dep" aria-pressed="{{d.on}}" onClick="{{d.pick}}">
+            <span style="display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 13px; color: #55625A; font-weight: 600">Leave the top by {{d.leave}}</span>
+              <span style="font-size: 17px; font-weight: 700">Bus 24 · {{d.dep}} → home {{d.home}}</span>
+              <span style="font-size: 12px; font-weight: 700; color: {{d.noteColor}}">{{d.note}}</span>
+            </span>
+            <span style="font-size: 12px; font-weight: 600; color: #55625A; text-align: right; flex-shrink: 0">{{d.mins}}</span>
+          </button>
+        </sc-for>
+        <p style="margin: 0; font-size: 13px; color: #55625A; line-height: 1.45">Times are from the Saturday timetable. Live times appear about an hour before departure. Last bus back: 22:10.</p>
+      </section>
+    </sc-if>
+
+    <section aria-label="Trip summary" style="background: #1F4029; color: #FFFFFF; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+        <div style="font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-size: 28px; font-weight: 700; line-height: 1">{{sum.start}} <span aria-hidden="true" style="opacity: .7">→</span><span class="sr" style="position: absolute; width: 1px; height: 1px; overflow: hidden">to</span> {{sum.end}}</div>
+        <div style="font-size: 15px; font-weight: 700">{{sum.total}}</div>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+        <sc-for list="{{sum.legs}}" as="l" hint-placeholder-count="4">
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: {{l.bg}}; color: {{l.fg}}">{{l.label}}</span>
+        </sc-for>
+      </div>
+      <div style="font-size: 13px; color: #D6E4D2">{{sum.detail}}</div>
+    </section>
+
+    <ol aria-label="Step by step" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+      <sc-for list="{{steps}}" as="st" hint-placeholder-count="6">
+        <li style="display: grid; grid-template-columns: 50px 24px minmax(0, 1fr); column-gap: 8px">
+          <div style="font-size: 14px; font-weight: 700; padding-top: 2px; text-align: right; color: #1D2620">{{st.time}}</div>
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <span style="width: 16px; height: 16px; border-radius: 50%; box-sizing: border-box; border: 3.5px solid {{st.dot}}; background: #FFFDF8; flex-shrink: 0; margin-top: 3px"></span>
+            <span style="flex: 1; width: 0; border-left: 5px {{st.railStyle}} {{st.rail}}; margin-top: 2px; min-height: 12px"></span>
+          </div>
+          <div style="padding-bottom: 20px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap">
+              <sc-if value="{{st.isBus}}" hint-placeholder-val="{{ false }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #2C6E95; color: #FFFFFF; padding: 3px 7px; border-radius: 7px; font-size: 12px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/></svg>Bus 24</span>
+              </sc-if>
+              <sc-if value="{{st.isTrain}}" hint-placeholder-val="{{ false }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #1F4029; color: #FFFFFF; padding: 3px 7px; border-radius: 7px; font-size: 12px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 21l2-4M16 21l-2-4"/></svg>Train</span>
+              </sc-if>
+              <sc-if value="{{st.isWalk}}" hint-placeholder-val="{{ true }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #EDE6D3; color: #1D2620; padding: 3px 7px; border-radius: 7px; font-size: 12px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 1 3 3M11 8l-1 7"/></svg>Walk</span>
+              </sc-if>
+              <sc-if value="{{st.isChange}}" hint-placeholder-val="{{ false }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #DDEBF3; color: #163F57; padding: 3px 7px; border-radius: 7px; font-size: 12px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg>Change</span>
+              </sc-if>
+              <span style="font-size: 16px; font-weight: 700">{{st.title}}</span>
+            </div>
+            <div style="font-size: 14px; color: #3B4740; line-height: 1.45">{{st.sub}}</div>
+            <sc-if value="{{st.hasEnd}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 14px; font-weight: 600">Get off at <strong>{{st.end}}</strong></div>
+            </sc-if>
+            <sc-if value="{{st.live}}" hint-placeholder-val="{{ false }}">
+              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #1F4029"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3F8A52"></span>{{st.liveText}}</div>
+            </sc-if>
+            <sc-if value="{{st.timetabled}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 12px; font-weight: 700; color: #55625A">{{st.liveText}}</div>
+            </sc-if>
+            <sc-if value="{{st.hasBackup}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 13px; background: #DDEBF3; color: #163F57; border-radius: 10px; padding: 8px 10px; line-height: 1.4">{{st.backup}}</div>
+            </sc-if>
+
+            <sc-if value="{{st.isFinal}}" hint-placeholder-val="{{ false }}">
+              <div style="background: #FFFDF8; border: 1.5px solid #E4DCC8; border-radius: 16px; overflow: hidden; margin-top: 4px">
+                <svg width="100%" height="150" viewBox="0 0 296 150" role="img" aria-label="Map of the final walk: from Larkhill Road stop, up Larkhill Lane, through a gate and along the hill path to the viewpoint" style="display: block; background: #EEF0DE">
+                  <rect width="296" height="150" fill="#EEF0DE"/>
+                  <path d="M150 0 C210 20 250 50 296 54 V0Z" fill="#CFE0C6"/>
+                  <path d="M0 122 H296" stroke="#FFFDF8" stroke-width="10"/>
+                  <path d="M40 122 C60 104 70 96 96 92 S150 84 170 64 S220 30 250 24" stroke="#2E5B3B" stroke-width="4" stroke-dasharray="1 7" stroke-linecap="round" fill="none"/>
+                  <circle cx="40" cy="122" r="9" fill="#2C6E95" stroke="#FFFDF8" stroke-width="3"/>
+                  <rect x="140" y="74" width="16" height="12" rx="2" fill="#FBECC8" stroke="#7A4E00" stroke-width="2"/>
+                  <circle cx="250" cy="24" r="9" fill="#2E5B3B" stroke="#FFFDF8" stroke-width="3"/>
+                  <text x="52" y="142" font-family="Figtree, sans-serif" font-size="11" font-weight="700" fill="#1D2620">Larkhill Road stop</text>
+                  <text x="162" y="98" font-family="Figtree, sans-serif" font-size="11" font-weight="700" fill="#7A4E00">Gate · muddy</text>
+                  <text x="196" y="48" font-family="Figtree, sans-serif" font-size="11" font-weight="700" fill="#1F4029">Viewpoint</text>
+                </svg>
+                <ol style="margin: 0; padding: 12px 14px 14px; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.45">
+                  <li style="display: flex; gap: 10px"><span style="width: 24px; height: 24px; border-radius: 50%; background: #E3EDDF; color: #1F4029; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">1</span><span>Cross at the zebra crossing and walk up <strong>Larkhill Lane</strong> for 300 m. Pavement on the left side.</span></li>
+                  <li style="display: flex; gap: 10px"><span style="width: 24px; height: 24px; border-radius: 50%; background: #E3EDDF; color: #1F4029; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">2</span>
+                    <span style="display: flex; flex-direction: column; gap: 6px"><span>Go through the <strong>wooden gate</strong> on the right, signed “Larkhill Top”.</span>
+                      <span style="display: flex; gap: 6px; font-size: 12px; background: #FBECC8; color: #5C3B00; padding: 7px 9px; border-radius: 9px; line-height: 1.4"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg><span><strong>Visitor update, yesterday:</strong> very muddy past the stile — the field-edge path is drier. Not verified.</span></span></span></li>
+                  <li style="display: flex; gap: 10px"><span style="width: 24px; height: 24px; border-radius: 50%; background: #E3EDDF; color: #1F4029; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">3</span><span>Follow the gravel path uphill for 800 m (steady climb, steps near the top) to the <strong>top bench</strong>.</span></li>
+                </ol>
+                <div style="padding: 0 14px 14px; font-size: 12px; color: #55625A">Walking directions checked 12 Oct</div>
+              </div>
+            </sc-if>
+          </div>
+        </li>
+      </sc-for>
+    </ol>
+
+    <sc-if value="{{isOut}}" hint-placeholder-val="{{ true }}">
+      <section aria-labelledby="ret-h" style="background: #FFFDF8; border: 1.5px solid #E4DCC8; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <h2 id="ret-h" style="margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E5B3B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg>Coming back</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3B4740">Bus 24 runs every 20 min from Larkhill Road until <strong>22:10</strong>. For the walk down in daylight, catch the <strong>16:57</strong>.</p>
+        <button type="button" onClick="{{goRet}}" style="height: 48px; border-radius: 14px; border: 1.5px solid #2E5B3B; background: #FFFDF8; color: #1F4029; font: 700 15px Figtree, system-ui, sans-serif; cursor: pointer">Plan the return trip</button>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{isRet}}" hint-placeholder-val="{{ false }}">
+      <section style="background: #FFFDF8; border: 1.5px solid #E4DCC8; border-radius: 18px; padding: 14px 16px; display: flex; align-items: center; gap: 12px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E5B3B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></svg>
+        <div style="flex: 1; min-width: 0">
+          <div id="remind-l" style="font-size: 15px; font-weight: 700">Remind me to start back</div>
+          <div style="font-size: 13px; color: #55625A">Nudge at {{remindAt}}, 15 min before you need to leave the top</div>
+        </div>
+        <button type="button" class="toggle" aria-labelledby="remind-l" aria-pressed="{{remind}}" onClick="{{toggleRemind}}"><span class="knob"></span></button>
+      </section>
+    </sc-if>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 22px; background: #FFFDF8; border-top: 1.5px solid #E4DCC8; display: flex; gap: 10px">
+    <button type="button" aria-label="Share trip" style="width: 52px; height: 52px; border-radius: 16px; border: 1.5px solid #D4CBB3; background: #FFFDF8; color: #1D2620; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/></svg></button>
+    <button type="button" style="flex: 1; height: 52px; border-radius: 16px; border: 0; background: #2E5B3B; color: #FFFFFF; font: 700 16px Figtree, system-ui, sans-serif; cursor: pointer">{{cta}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dir: 'out', route: 'quick', ret: '1657', remind: true };
+  }
+  step(o) {
+    const rails = {
+      walk: ['#8A9389', 'dotted', '#55625A'],
+      bus: ['#2C6E95', 'solid', '#2C6E95'],
+      train: ['#1F4029', 'solid', '#1F4029'],
+      change: ['#C9BFA5', 'dotted', '#2C6E95'],
+      none: ['transparent', 'solid', '#2E5B3B']
+    };
+    const r = rails[o.mode || 'none'];
+    return {
+      time: '', sub: '', end: '', liveText: '', backup: '', ...o,
+      rail: r[0], railStyle: r[1], dot: o.dotColor || r[2],
+      isBus: o.mode === 'bus', isTrain: o.mode === 'train',
+      isWalk: o.mode === 'walk' && !o.plain, isChange: o.mode === 'change',
+      hasEnd: !!o.end, live: o.status === 'live', timetabled: o.status === 'tt',
+      hasBackup: !!o.backup, isFinal: !!o.final
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const isOut = s.dir === 'out';
+    const finalWalk = { mode: 'walk', time: '14:17', title: 'Final walk to the top', sub: '1.1 km · about 12 min · 90 m climb, steps near the top', final: true };
+    const arrive = { time: '14:29', title: 'Larkhill Viewpoint', sub: 'You’ve arrived — enjoy the view. Sunset at 16:38.', dotColor: '#2E5B3B', plain: true };
+    const outRoutes = {
+      quick: [
+        { mode: 'walk', time: '13:49', title: 'Walk to Central Station', sub: 'From Canal Street · 9 min · 650 m, step-free' },
+        { mode: 'train', time: '13:58', title: 'towards Hebble Bridge', sub: 'Platform 3 · 2 stops · 6 min', end: '14:04 Northgate', status: 'live', liveText: 'Live: on time · updated 1 min ago' },
+        { mode: 'change', time: '14:04', title: 'at Northgate', sub: '8 min to change. Leave by the footbridge, then 2 min walk to bus stop B.', backup: 'Running late? The next Bus 24 from stop B is at 14:32.' },
+        { mode: 'bus', time: '14:12', title: 'towards Larkhill', sub: 'Stop B · 6 stops · 5 min', end: '14:17 Larkhill Road', status: 'live', liveText: 'Live: on time · updated 1 min ago' },
+        finalWalk, arrive
+      ],
+      direct: [
+        { mode: 'walk', time: '13:44', title: 'Walk to Market St', sub: 'From Canal Street · 4 min · 300 m to stop K' },
+        { mode: 'bus', time: '13:48', title: 'towards Larkhill', sub: 'Stop K · 14 stops · 29 min', end: '14:17 Larkhill Road', status: 'live', liveText: 'Live: on time · updated 1 min ago' },
+        finalWalk, arrive
+      ]
+    };
+    const deps = [
+      { id: '1657', dep: '16:57', leave: '16:45', home: '17:30', mins: '45 min', note: 'Walk down in daylight', noteColor: '#1F4029' },
+      { id: '1717', dep: '17:17', leave: '17:05', home: '17:50', mins: '45 min', note: 'Dusk on the path — bring a light', noteColor: '#7A4E00' },
+      { id: '1737', dep: '17:37', leave: '17:25', home: '18:10', mins: '45 min', note: 'After dark — path is unlit', noteColor: '#7A4E00' }
+    ];
+    const d = deps.find(x => x.id === s.ret);
+    const add = (t, m) => { const [h, mm] = t.split(':').map(Number); const v = h * 60 + mm + m; return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0'); };
+    const retSteps = [
+      { mode: 'walk', time: d.leave, title: 'Walk down to Larkhill Road', sub: 'About 10 min downhill · same path, through the wooden gate' },
+      { mode: 'bus', time: d.dep, title: 'towards City Centre', sub: 'Larkhill Road (opposite side) · 14 stops · 29 min', end: add(d.dep, 29) + ' Market St', status: 'tt', liveText: 'Timetabled — live times appear about 1 h before' },
+      { mode: 'walk', time: add(d.dep, 29), title: 'Walk home', sub: '4 min · 300 m to Canal Street' },
+      { time: d.home, title: 'Canal Street', sub: 'Home again.', dotColor: '#2E5B3B', plain: true }
+    ];
+    const raw = isOut ? outRoutes[s.route] : retSteps;
+    const steps = raw.map(o => this.step(o));
+    const W = { bg: '#EDE6D3', fg: '#1D2620' }, B = { bg: '#DDEBF3', fg: '#163F57' }, T = { bg: '#E3EDDF', fg: '#1F4029' };
+    const sums = {
+      quick: { start: '13:49', end: '14:29', total: '40 min', legs: [{ label: 'Walk 9', ...W }, { label: 'Train 6', ...T }, { label: 'Change', ...W }, { label: 'Bus 24 · 5', ...B }, { label: 'Walk 12', ...W }], detail: '1 change · 23 min walking in total' },
+      direct: { start: '13:44', end: '14:29', total: '45 min', legs: [{ label: 'Walk 4', ...W }, { label: 'Bus 24 · 29', ...B }, { label: 'Walk 12', ...W }], detail: 'No changes · 16 min walking in total' }
+    };
+    const sum = isOut ? sums[s.route] : { start: d.leave, end: d.home, total: '45 min', legs: [{ label: 'Walk 10', ...W }, { label: 'Bus 24 · 29', ...B }, { label: 'Walk 4', ...W }], detail: 'No changes · timetabled times' };
+    const routes = [['quick', 'Quicker', '40 min', '1 change'], ['direct', 'No changes', '45 min', 'Bus 24 direct']]
+      .map(([id, label, total, changes]) => ({ label, total, changes, on: s.route === id, pick: () => this.setState({ route: id }) }));
+    const returns = deps.map(x => ({ ...x, on: s.ret === x.id, pick: () => this.setState({ ret: x.id }) }));
+    return {
+      isOut, isRet: !isOut, steps, sum, routes, returns,
+      remind: s.remind, remindAt: add(d.leave, -15),
+      toggleRemind: () => this.setState({ remind: !s.remind }),
+      goOut: () => this.setState({ dir: 'out' }),
+      goRet: () => this.setState({ dir: 'ret' }),
+      cta: isOut ? 'Start trip · leave at ' + sum.start : 'Save return · ' + d.dep + ' bus'
+    };
+  }
+}
+</script>
+</body>
+</html>

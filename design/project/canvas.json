@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-02T12:00:00Z" },
+  "title": "Trail Signals",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "1 · Explore", "is_interactive": true, "radius": 36 },
+    "PlaceDetails.dc.html": { "x": 470, "y": 0, "w": 390, "h": 1720, "title": "2 · Place details", "is_interactive": true, "radius": 36 },
+    "TripPlanner.dc.html": { "x": 940, "y": 0, "w": 390, "h": 1900, "title": "3 · Trip planner", "is_interactive": true, "radius": 36 },
+    "AddUpdate.dc.html": { "x": 1410, "y": 0, "w": 390, "h": 1100, "title": "4 · Add an update", "is_interactive": true, "radius": 36 }
+  },
+  "order": ["Main.dc.html", "PlaceDetails.dc.html", "TripPlanner.dc.html", "AddUpdate.dc.html"],
+  "notes": {
+    "title": { "x": 0, "y": -300, "text": "Trail Signals — find a little outdoor adventure, then know how to get there", "kind": "title1", "maxW": 1800 }
+  },
+  "designSystems": []
+}

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trail Signals · Explore</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2C6E95}a:hover{color:#1F5677}
+.chip{height:44px;min-width:44px;padding:0 14px;border-radius:999px;border:1.5px solid #D4CBB3;background:#FFFDF8;color:#1D2620;font:600 14px/1 Figtree,system-ui,sans-serif;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.chip:hover{border-color:#2E5B3B}
+.chip[aria-pressed="true"]{background:#2E5B3B;border-color:#2E5B3B;color:#FFFFFF}
+.chip:focus-visible,.card:focus-visible,.tab:focus-visible{outline:3px solid #2C6E95;outline-offset:2px}
+.scroll-x{overflow-x:auto;scrollbar-width:none}
+.scroll-x::-webkit-scrollbar{display:none}
+.card{text-decoration:none;color:inherit}
+.card:hover{border-color:#2E5B3B}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F8F3E6; color: #1D2620; font-family: Figtree, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; position: relative">
+
+  <header style="padding: 18px 16px 10px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 13px; font-weight: 600; color: #55625A; display: flex; align-items: center; gap: 6px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          Near Canal Street · Sat afternoon
+        </div>
+        <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-size: 26px; line-height: 1.1; font-weight: 700; color: #1F4029">Where to this afternoon?</h1>
+      </div>
+      <button type="button" aria-label="Use my current location" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px; border: 1.5px solid #D4CBB3; background: #FFFDF8; color: #2E5B3B; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      </button>
+    </div>
+    <label style="height: 44px; border-radius: 14px; background: #FFFDF8; border: 1.5px solid #D4CBB3; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #55625A">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <span class="sr">Search</span>
+      <input type="search" placeholder="Search parks, walks or a stop" style="border: 0; outline: none; background: transparent; font: 500 15px Figtree, system-ui, sans-serif; color: #1D2620; flex: 1; min-width: 0">
+    </label>
+  </header>
+
+  <section aria-label="Filters" style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 10px">
+    <div class="scroll-x" style="display: flex; align-items: center; gap: 8px; padding: 0 16px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #55625A; width: 52px; flex-shrink: 0">Travel</span>
+      <sc-for list="{{timeChips}}" as="c" hint-placeholder-count="4">
+        <button type="button" class="chip" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <div class="scroll-x" style="display: flex; align-items: center; gap: 8px; padding: 0 16px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #55625A; width: 52px; flex-shrink: 0">Do</span>
+      <sc-for list="{{actChips}}" as="c" hint-placeholder-count="5">
+        <button type="button" class="chip" aria-pressed="{{c.on}}" onClick="{{c.pick}}">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <div class="scroll-x" style="display: flex; align-items: center; gap: 8px; padding: 0 16px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #55625A; width: 52px; flex-shrink: 0">Effort</span>
+      <sc-for list="{{diffChips}}" as="c" hint-placeholder-count="3">
+        <button type="button" class="chip" aria-pressed="{{c.on}}" onClick="{{c.pick}}">
+          <span aria-hidden="true" style="display: inline-flex; gap: 2px; align-items: flex-end">
+            <span style="width: 4px; height: 6px; border-radius: 1px; background: currentColor"></span>
+            <span style="width: 4px; height: 10px; border-radius: 1px; background: currentColor; opacity: {{c.bar2}}"></span>
+            <span style="width: 4px; height: 14px; border-radius: 1px; background: currentColor; opacity: {{c.bar3}}"></span>
+          </span>
+          {{c.label}}
+        </button>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-label="Map of nearby places and stops" style="margin: 0 16px; height: 168px; border-radius: 18px; overflow: hidden; position: relative; border: 1.5px solid #D4CBB3; background: #EEF0DE; flex-shrink: 0">
+    <svg width="358" height="168" viewBox="0 0 358 168" aria-hidden="true" style="position: absolute; inset: 0">
+      <rect width="358" height="168" fill="#EEF0DE"/>
+      <path d="M0 120 C60 110 90 140 150 128 S260 96 358 112 L358 168 L0 168Z" fill="#D7E8EF"/>
+      <path d="M0 126 C60 116 90 146 150 134 S260 102 358 118" stroke="#9CC4D8" stroke-width="3" fill="none"/>
+      <ellipse cx="62" cy="52" rx="48" ry="30" fill="#CFE0C6"/>
+      <ellipse cx="268" cy="44" rx="62" ry="32" fill="#CFE0C6"/>
+      <ellipse cx="198" cy="140" rx="34" ry="16" fill="#CFE0C6"/>
+      <path d="M150 0 L170 168 M0 88 L358 70" stroke="#FFFDF8" stroke-width="6"/>
+      <path d="M20 160 C80 100 120 90 176 84 S280 60 340 24" stroke="#2C6E95" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M0 20 L358 150" stroke="#1F4029" stroke-width="4"/>
+      <path d="M0 20 L358 150" stroke="#FFFDF8" stroke-width="1.6" stroke-dasharray="6 6"/>
+      <path d="M300 33 C306 40 312 42 318 40" stroke="#55625A" stroke-width="2" stroke-dasharray="2 4" fill="none" stroke-linecap="round"/>
+      <circle cx="300" cy="33" r="6" fill="#FFFDF8" stroke="#2C6E95" stroke-width="3"/>
+      <circle cx="94" cy="54" r="6" fill="#FFFDF8" stroke="#1F4029" stroke-width="3"/>
+      <circle cx="218" cy="99" r="6" fill="#FFFDF8" stroke="#1F4029" stroke-width="3"/>
+      <circle cx="120" cy="102" r="6" fill="#FFFDF8" stroke="#2C6E95" stroke-width="3"/>
+      <circle cx="166" cy="84" r="9" fill="#2C6E95" opacity="0.18"/>
+      <circle cx="166" cy="84" r="5" fill="#2C6E95" stroke="#FFFDF8" stroke-width="2"/>
+    </svg>
+    <sc-if value="{{show.larkhill}}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; left: 300px; top: 6px; display: flex; flex-direction: column; align-items: center">
+        <span style="background: #2E5B3B; color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap; transform: translateX(-30%)">Larkhill</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{show.millbrook}}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; left: 40px; top: 24px">
+        <span style="background: #2E5B3B; color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap">Millbrook</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{show.hollin}}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; left: 70px; top: 114px">
+        <span style="background: #2E5B3B; color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap">Hollin Wood</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{show.ridgeback}}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; left: 226px; top: 110px">
+        <span style="background: #2E5B3B; color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap">Ridgeback</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{show.weavers}}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; left: 182px; top: 52px">
+        <span style="background: #2E5B3B; color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap">Weavers' Park</span>
+      </div>
+    </sc-if>
+    <div style="position: absolute; left: 8px; bottom: 8px; display: flex; gap: 6px; background: #FFFDF8; border-radius: 10px; padding: 5px 8px; font-size: 11px; font-weight: 600; color: #1D2620; align-items: center">
+      <span style="width: 14px; height: 4px; border-radius: 2px; background: #2C6E95"></span>Bus
+      <span style="width: 14px; height: 4px; border-radius: 2px; background: #1F4029; margin-left: 4px"></span>Train
+      <span style="width: 14px; height: 0; border-top: 2px dotted #55625A; margin-left: 4px"></span>Walk
+    </div>
+    <button type="button" style="position: absolute; right: 8px; bottom: 8px; height: 32px; padding: 0 10px; border-radius: 10px; border: 0; background: #1F4029; color: #FFFFFF; font: 600 12px Figtree, system-ui, sans-serif; cursor: pointer">Open map</button>
+  </section>
+
+  <section aria-labelledby="results-h" style="flex: 1; min-height: 0; display: flex; flex-direction: column; padding-top: 12px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 16px 8px">
+      <h2 id="results-h" style="margin: 0; font-size: 16px; font-weight: 700; color: #1D2620">{{countLabel}}</h2>
+      <span style="font-size: 12px; color: #55625A; font-weight: 500">Door-to-door times</span>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 92px; display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{results}}" as="p" hint-placeholder-count="3">
+        <a href="PlaceDetails.dc.html" class="card" style="display: flex; gap: 12px; padding: 12px; border-radius: 16px; background: #FFFDF8; border: 1.5px solid #E4DCC8">
+          <div style="width: 48px; height: 48px; border-radius: 14px; background: #E3EDDF; color: #2E5B3B; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <sc-if value="{{p.isView}}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20l6-10 4 6 3-4 5 8z"/><circle cx="17" cy="6" r="2"/></svg></sc-if>
+            <sc-if value="{{p.isWalk}}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5M12 2l6 8h-3l4 6H5l4-6H6z"/></svg></sc-if>
+            <sc-if value="{{p.isPark}}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M5 19l7-7"/></svg></sc-if>
+          </div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+            <div style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start">
+              <div style="min-width: 0">
+                <div style="font-size: 16px; font-weight: 700; line-height: 1.2">{{p.name}}</div>
+                <div style="font-size: 13px; color: #55625A; margin-top: 2px">{{p.kind}} · {{p.diff}} · {{p.visit}}</div>
+              </div>
+              <div style="text-align: right; flex-shrink: 0">
+                <div style="font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-size: 20px; font-weight: 700; color: #1F4029; line-height: 1">{{p.total}}</div>
+                <div style="font-size: 11px; color: #55625A; font-weight: 600">min</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; font-weight: 600">
+              <sc-if value="{{p.isTrain}}" hint-placeholder-val="{{ false }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #1F4029; color: #FFFFFF; padding: 3px 7px; border-radius: 7px; font-size: 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 21l2-4M16 21l-2-4"/></svg>{{p.line}}</span>
+              </sc-if>
+              <sc-if value="{{p.isBus}}" hint-placeholder-val="{{ true }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #2C6E95; color: #FFFFFF; padding: 3px 7px; border-radius: 7px; font-size: 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/></svg>{{p.line}}</span>
+              </sc-if>
+              <span style="color: #1D2620">{{p.ride}}</span>
+              <span aria-hidden="true" style="color: #8A9389">+</span>
+              <span style="display: inline-flex; align-items: center; gap: 3px; color: #1D2620"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 1 3 3M11 8l-1 7"/></svg>{{p.walk}}</span>
+            </div>
+            <sc-if value="{{p.noteGood}}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; gap: 6px; align-items: center; font-size: 12px; color: #2E5B3B; font-weight: 600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg><span>{{p.note}}</span><span style="color: #55625A; font-weight: 500">· {{p.noteAge}}</span></div>
+            </sc-if>
+            <sc-if value="{{p.noteWarn}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; gap: 6px; align-items: center; font-size: 12px; color: #7A4E00; font-weight: 600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg><span>{{p.note}}</span><span style="color: #55625A; font-weight: 500">· {{p.noteAge}}</span></div>
+            </sc-if>
+            <sc-if value="{{p.noteNone}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 12px; color: #55625A; font-weight: 500">{{p.note}}</div>
+            </sc-if>
+          </div>
+        </a>
+      </sc-for>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 20px; border-radius: 16px; border: 1.5px dashed #C9BFA5; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center">
+          <div style="font-weight: 700; font-size: 15px">Nothing quite fits yet</div>
+          <div style="font-size: 13px; color: #55625A; line-height: 1.45">Try a longer travel time or another activity — there's usually something green within an hour.</div>
+          <button type="button" class="chip" onClick="{{reset}}">Reset filters</button>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; background: #FFFDF8; border-top: 1.5px solid #E4DCC8; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 6px 8px 14px; box-sizing: border-box">
+    <a href="Main.dc.html" class="tab" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #2E5B3B; font-size: 12px; font-weight: 700">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Explore</a>
+    <a href="TripPlanner.dc.html" class="tab" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #55625A; font-size: 12px; font-weight: 600">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/></svg>Trips</a>
+    <a href="AddUpdate.dc.html" class="tab" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #55625A; font-size: 12px; font-weight: 600">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4h11l-2 4 2 4H5"/></svg>Share update</a>
+    <a href="Main.dc.html" class="tab" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #55625A; font-size: 12px; font-weight: 600">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Saved</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { time: 60, act: 'all', diff: { easy: true, moderate: true, hilly: true } };
+  }
+  renderVals() {
+    const s = this.state;
+    const places = [
+      { id: 'weavers', name: "Weavers' Park", kind: 'Park', acts: ['park', 'picnic'], d: 'easy', diff: 'Easy', visit: '1 h', total: 16, mode: 'bus', line: 'Bus 3', ride: '10 min', walk: '3 min', tone: 'none', note: 'No visitor updates in the last 14 days', noteAge: '' },
+      { id: 'millbrook', name: 'Millbrook Meadows', kind: 'Park · picnic spot', acts: ['park', 'picnic'], d: 'easy', diff: 'Easy, step-free', visit: '1–2 h', total: 28, mode: 'train', line: 'Train', ride: '14 min', walk: '6 min', tone: 'good', note: 'Picnic tables free by the pond', noteAge: 'yesterday' },
+      { id: 'hollin', name: 'Hollin Wood loop', kind: 'Woodland walk', acts: ['walk'], d: 'moderate', diff: 'Moderate', visit: '1.5 h', total: 38, mode: 'bus', line: 'Bus 7', ride: '25 min', walk: '9 min', tone: 'warn', note: 'Muddy at the stream crossing', noteAge: '2 days ago' },
+      { id: 'larkhill', name: 'Larkhill Viewpoint', kind: 'Viewpoint', acts: ['view', 'walk', 'picnic'], d: 'moderate', diff: 'Moderate', visit: '1.5–2 h', total: 45, mode: 'bus', line: 'Bus 24', ride: '32 min', walk: '12 min', tone: 'good', note: 'Clear sunset views reported', noteAge: '3 h ago' },
+      { id: 'ridgeback', name: 'Ridgeback Common', kind: 'Hill walk · viewpoint', acts: ['walk', 'view'], d: 'hilly', diff: 'Hilly', visit: '2–3 h', total: 58, mode: 'train', line: 'Train + Bus 61', ride: '41 min', walk: '14 min', tone: 'warn', note: 'North gate closed — may be out of date', noteAge: '5 days ago' }
+    ];
+    const results = places
+      .filter(p => p.total <= s.time)
+      .filter(p => s.act === 'all' || p.acts.includes(s.act))
+      .filter(p => s.diff[p.d])
+      .map(p => ({
+        ...p,
+        isView: p.acts[0] === 'view',
+        isWalk: p.acts[0] === 'walk',
+        isPark: p.acts[0] === 'park',
+        isTrain: p.mode === 'train',
+        isBus: p.mode === 'bus',
+        noteGood: p.tone === 'good',
+        noteWarn: p.tone === 'warn',
+        noteNone: p.tone === 'none'
+      }));
+    const show = {};
+    places.forEach(p => { show[p.id] = results.some(r => r.id === p.id); });
+    const timeChips = [20, 30, 45, 60].map(t => ({ label: '≤ ' + t + ' min', on: s.time === t, pick: () => this.setState({ time: t }) }));
+    const actChips = [['all', 'Anything'], ['walk', 'Walks'], ['park', 'Parks'], ['view', 'Viewpoints'], ['picnic', 'Picnic spots']]
+      .map(([k, l]) => ({ label: l, on: s.act === k, pick: () => this.setState({ act: k }) }));
+    const diffChips = [['easy', 'Easy', 0.3, 0.3], ['moderate', 'Moderate', 1, 0.3], ['hilly', 'Hilly', 1, 1]]
+      .map(([k, l, b2, b3]) => ({ label: l, on: !!s.diff[k], bar2: b2, bar3: b3, pick: () => this.setState({ diff: { ...s.diff, [k]: !s.diff[k] } }) }));
+    const n = results.length;
+    return {
+      results, show, timeChips, actChips, diffChips,
+      empty: n === 0,
+      countLabel: n === 0 ? 'No matches' : n + (n === 1 ? ' place' : ' places') + ' within ' + s.time + ' min',
+      reset: () => this.setState({ time: 60, act: 'all', diff: { easy: true, moderate: true, hilly: true } })
+    };
+  }
+}
+</script>
+</body>
+</html>

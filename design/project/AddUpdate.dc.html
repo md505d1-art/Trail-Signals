@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trail Signals · Share an update</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=Figtree:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2C6E95}a:hover{color:#1F5677}
+.cat{min-height:72px;border-radius:16px;border:1.5px solid #E4DCC8;background:#FFFDF8;color:#1D2620;font:700 14px Figtree,system-ui,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;padding:10px 12px;text-align:left}
+.cat[aria-pressed="true"]{border:2px solid #2E5B3B;padding:9.5px 11.5px;background:#E3EDDF;color:#1F4029}
+.chip{height:44px;padding:0 14px;border-radius:999px;border:1.5px solid #D4CBB3;background:#FFFDF8;color:#1D2620;font:600 14px Figtree,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:#2E5B3B;border-color:#2E5B3B;color:#FFFFFF}
+.post{width:100%;height:54px;border-radius:16px;border:0;background:#2E5B3B;color:#FFFFFF;font:700 16px Figtree,system-ui,sans-serif;cursor:pointer}
+.post:disabled{background:#C9BFA5;color:#3B4740;cursor:not-allowed}
+.cat:focus-visible,.chip:focus-visible,.post:focus-visible,.btn:focus-visible,textarea:focus-visible{outline:3px solid #2C6E95;outline-offset:2px}
+.btn{text-decoration:none}
+textarea::placeholder{color:#6B776F}
+</style>
+</helmet>
+<div style="width: 390px; height: 1100px; box-sizing: border-box; background: #F8F3E6; color: #1D2620; font-family: Figtree, system-ui, sans-serif; position: relative; overflow: hidden">
+
+  <header style="padding: 16px 16px 14px; display: flex; align-items: center; gap: 10px; background: #FFFDF8; border-bottom: 1.5px solid #E4DCC8">
+    <a href="PlaceDetails.dc.html" class="btn" aria-label="Close and go back" style="width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #E4DCC8; color: #1D2620; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+    <div style="flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-size: 23px; line-height: 1.15; color: #1F4029">Share an update</h1>
+      <div style="font-size: 13px; color: #55625A; font-weight: 600; display: flex; align-items: center; gap: 4px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+        Larkhill Viewpoint · <button type="button" style="border: 0; background: none; padding: 0; color: #2C6E95; font: 700 13px Figtree, system-ui, sans-serif; cursor: pointer; min-height: 24px">change</button>
+      </div>
+    </div>
+  </header>
+
+  <sc-if value="{{posted}}" hint-placeholder-val="{{ false }}">
+    <section aria-live="polite" style="padding: 40px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: #E3EDDF; color: #2E5B3B; display: flex; align-items: center; justify-content: center">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+      </div>
+      <h2 style="margin: 0; font-family: 'Bricolage Grotesque', Figtree, sans-serif; font-size: 24px; color: #1F4029">Thanks — that helps</h2>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #3B4740">Your update now shows on Larkhill Viewpoint as a visitor report, “seen {{whenLower}}”. Others can confirm it or say it’s changed.</p>
+      <div style="width: 100%; text-align: left; background: #FFFDF8; border: 1.5px solid #E4DCC8; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+          <span style="font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; background: {{tagBg}}; color: {{tagFg}}">{{catLabel}}</span>
+          <span style="font-size: 12px; font-weight: 600; color: #55625A">Seen {{whenLower}} · {{whereLabel}}</span>
+        </div>
+        <p style="margin: 0; font-size: 15px; line-height: 1.45">{{noteShown}}</p>
+      </div>
+      <div style="display: flex; gap: 10px; width: 100%">
+        <button type="button" onClick="{{undo}}" style="flex: 1; height: 50px; border-radius: 14px; border: 1.5px solid #D4CBB3; background: #FFFDF8; color: #1D2620; font: 700 15px Figtree, system-ui, sans-serif; cursor: pointer">Edit or remove</button>
+        <a href="PlaceDetails.dc.html" class="btn" style="flex: 1; height: 50px; border-radius: 14px; background: #2E5B3B; color: #FFFFFF; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center">Back to place</a>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{editing}}" hint-placeholder-val="{{ true }}">
+    <form style="padding: 18px 16px 40px; display: flex; flex-direction: column; gap: 22px">
+
+      <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+        <legend style="font-size: 18px; font-weight: 700; padding: 0; margin-bottom: 10px">What did you notice?</legend>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
+            <button type="button" class="cat" aria-pressed="{{c.on}}" onClick="{{c.pick}}">
+              <span style="width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: {{c.iconBg}}; color: {{c.iconFg}}">
+                <sc-if value="{{c.i_mud}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s-5 6-5 10a5 5 0 0 0 10 0c0-4-5-10-5-10z"/></svg></sc-if>
+                <sc-if value="{{c.i_gate}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V5M20 20V5M4 9h16M4 15h16M9 9v6M14 9v6"/></svg></sc-if>
+                <sc-if value="{{c.i_block}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></sc-if>
+                <sc-if value="{{c.i_water}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2M2 15c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2"/></svg></sc-if>
+                <sc-if value="{{c.i_view}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6v3M5 11l2 1.5M19 11l-2 1.5"/></svg></sc-if>
+                <sc-if value="{{c.i_busy}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 5a3 3 0 0 1 0 6M18 15c2 .5 3 2 3 5"/></svg></sc-if>
+                <sc-if value="{{c.i_wild}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M5 19l7-7"/></svg></sc-if>
+                <sc-if value="{{c.i_fac}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 21V3h12v18M3 21h18M14 12h.01"/></svg></sc-if>
+              </span>
+              {{c.label}}
+            </button>
+          </sc-for>
+        </div>
+      </fieldset>
+
+      <fieldset style="border: 0; margin: 0; padding: 0">
+        <legend style="font-size: 16px; font-weight: 700; padding: 0; margin-bottom: 10px">Where?</legend>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <sc-for list="{{wheres}}" as="w" hint-placeholder-count="4">
+            <button type="button" class="chip" aria-pressed="{{w.on}}" onClick="{{w.pick}}">{{w.label}}</button>
+          </sc-for>
+        </div>
+        <div style="margin-top: 8px; font-size: 12px; color: #55625A">Suggested from your location — you’re near the wooden gate.</div>
+      </fieldset>
+
+      <fieldset style="border: 0; margin: 0; padding: 0">
+        <legend style="font-size: 16px; font-weight: 700; padding: 0; margin-bottom: 10px">When did you see it?</legend>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <sc-for list="{{whens}}" as="w" hint-placeholder-count="3">
+            <button type="button" class="chip" aria-pressed="{{w.on}}" onClick="{{w.pick}}">{{w.label}}</button>
+          </sc-for>
+        </div>
+      </fieldset>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="note" style="font-size: 16px; font-weight: 700">Add a short note <span style="font-weight: 500; color: #55625A">(optional)</span></label>
+        <textarea id="note" rows="3" maxlength="200" placeholder="e.g. Field-edge path to the left is drier" onInput="{{onNote}}" style="border-radius: 14px; border: 1.5px solid #D4CBB3; background: #FFFDF8; padding: 12px 14px; font: 500 15px/1.45 Figtree, system-ui, sans-serif; color: #1D2620; resize: none"></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <button type="button" style="height: 44px; padding: 0 14px; border-radius: 12px; border: 1.5px dashed #9C9378; background: transparent; color: #1D2620; font: 600 14px Figtree, system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Add a photo</button>
+          <span style="font-size: 12px; color: #55625A">{{count}}/200</span>
+        </div>
+      </div>
+
+      <div role="note" style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #DDEBF3; color: #163F57; font-size: 13px; line-height: 1.5">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>
+        <span>Updates appear as <strong>visitor reports</strong> with the time you saw them. They fade after 3 days and are hidden after 14. Please don’t include anyone’s personal details. In an emergency, call local emergency services.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <button type="button" class="post" disabled="{{cantPost}}" onClick="{{post}}">{{postLabel}}</button>
+        <div style="font-size: 12px; color: #55625A; text-align: center">Posted as “Visitor” — your name isn’t shown</div>
+      </div>
+    </form>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cat: 'mud', where: 'path', when: 'now', note: '', posted: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const CAUTION = { bg: '#FBECC8', fg: '#7A4E00' }, GOOD = { bg: '#E3EDDF', fg: '#1F4029' }, INFO = { bg: '#DDEBF3', fg: '#163F57' };
+    const defs = [
+      ['mud', 'Muddy path', CAUTION], ['gate', 'Gate closed', CAUTION],
+      ['block', 'Path blocked', CAUTION], ['water', 'Flooding', CAUTION],
+      ['view', 'Great view', GOOD], ['wild', 'Wildlife & flowers', GOOD],
+      ['busy', 'Very busy', INFO], ['fac', 'Toilets / café closed', INFO]
+    ];
+    const cats = defs.map(([id, label, t]) => {
+      const c = { label, on: s.cat === id, iconBg: t.bg, iconFg: t.fg, pick: () => this.setState({ cat: s.cat === id ? null : id }) };
+      ['mud', 'gate', 'block', 'water', 'view', 'busy', 'wild', 'fac'].forEach(k => { c['i_' + k] = k === id; });
+      return c;
+    });
+    const whereDefs = [['entrance', 'At the entrance'], ['path', 'On the path'], ['top', 'At the top'], ['all', 'Whole place']];
+    const whenDefs = [['now', 'Just now'], ['today', 'Earlier today'], ['yday', 'Yesterday']];
+    const wheres = whereDefs.map(([id, label]) => ({ label, on: s.where === id, pick: () => this.setState({ where: id }) }));
+    const whens = whenDefs.map(([id, label]) => ({ label, on: s.when === id, pick: () => this.setState({ when: id }) }));
+    const cur = defs.find(d => d[0] === s.cat);
+    const whenLabel = (whenDefs.find(w => w[0] === s.when) || whenDefs[0])[1];
+    const whereLabel = (whereDefs.find(w => w[0] === s.where) || whereDefs[0])[1];
+    return {
+      cats, wheres, whens,
+      posted: s.posted, editing: !s.posted,
+      count: s.note.length,
+      onNote: (e) => this.setState({ note: e.target.value.slice(0, 200) }),
+      cantPost: !s.cat,
+      postLabel: s.cat ? 'Post update' : 'Choose what you noticed',
+      post: () => this.setState({ posted: true }),
+      undo: () => this.setState({ posted: false }),
+      catLabel: cur ? cur[1] : '',
+      tagBg: cur ? cur[2].bg : '#EDE6D3',
+      tagFg: cur ? cur[2].fg : '#1D2620',
+      whenLower: whenLabel.toLowerCase(),
+      whereLabel: whereLabel.toLowerCase(),
+      noteShown: s.note || 'No note added.'
+    };
+  }
+}
+</script>
+</body>
+</html>

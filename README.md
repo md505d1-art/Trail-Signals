@@ -16,7 +16,7 @@ Scan [`qr/trail-signals-qr-card.png`](qr/trail-signals-qr-card.png), open the li
 
 | Where it runs | Your location | Places and stops | Travel times |
 |---|---|---|---|
-| Web version (`index.html`) | Device GPS, or type any town | Live from OpenStreetMap (Overpass API), with Nominatim for place names | Estimated from distance and stop type, clearly labelled |
+| Web version (`index.html`) | Device GPS, or type any town | Live from OpenStreetMap (Overpass API, raced across four public servers), with Photon and Nominatim for place names | Estimated from distance and stop type, clearly labelled |
 | Claude app artifact | Type any town, area or station (the app sandbox blocks GPS and outside map data) | Suggested by Claude, labelled "Suggested by Claude · check details" | Typical times from Claude, labelled as such |
 | Anywhere | Demo city | Made-up sample places | Made up |
 
@@ -28,6 +28,8 @@ Sunrise, sunset and dusk are calculated on the device for the starting point, so
 - **Place details:** illustration (generated per place and time of day), stats, latest-update banner, daylight advice, public transport options, lines at the stop, visitor updates with "Still true" / "Not now", and tips.
 - **Plan your trip:** leave now, later or "Catch the sunset". You get an outbound timeline with a final-walk sketch and directions. A return-journey toggle lets you choose how long to stay and checks whether you'll walk back in daylight. Trips can be saved.
 - **Add an update:** pick what you noticed, where and when, then add a note and an optional photo. In the Claude artifact, updates are shared with everyone who can use the page; elsewhere they stay on the device.
+- **Food:** cafés, ice cream, bakeries, food markets and notable restaurants show up under the Food spots filter. Every outdoor spot lists food and shops within about 500 m.
+- **Offline:** tap **Save offline** on any area. Saved areas, their spots and food lists keep working without a connection, and the web version keeps itself cached. Live times and new searches still need a connection.
 - **Saved, Trips, Updates** tabs.
 
 ## Earlier design canvas
